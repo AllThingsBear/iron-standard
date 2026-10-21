@@ -6,5 +6,6 @@ export async function GET(){
   const days=db().prepare('SELECT day,calories,protein,walk_minutes,weight,waist,notes FROM daily_log ORDER BY day DESC').all();
   const sets=db().prepare('SELECT day,exercise_id,set_no,weight,reps,pain,notes FROM set_log ORDER BY day DESC,exercise_id,set_no').all();
   const sessions=db().prepare('SELECT day,general_note,confirmed_at,sent_at FROM session_log').all();
-  return Response.json({exercises,days,sets,sessions,profile:getProfile(),program:getProgram()});
+  const notes=db().prepare('SELECT id,day,author,body,created_at FROM trainer_notes ORDER BY id').all();
+  return Response.json({exercises,days,sets,sessions,notes,profile:getProfile(),program:getProgram()});
 }

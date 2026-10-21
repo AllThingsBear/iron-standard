@@ -8,6 +8,7 @@ type Entry={day:string;exercise_id:string;done:number;weight:number|null;reps:st
 type Daily={day:string;calories:number|null;protein:number|null;walk_minutes:number|null;weight:number|null;waist:number|null;notes:string};
 type SetEntry={day:string;exercise_id:string;set_no:number;weight:number|null;reps:number|null;pain:number|null;notes:string|null};
 type Sess={day:string;general_note:string|null;confirmed_at:string|null;sent_at:string|null};
+type Note={id:number;day:string;author:string;body:string;created_at:string};
 type SetDraft={weight:string;reps:string;pain:string;notes:string};
 type DraftRow={done:boolean;weight:string;reps:string;notes:string};
 
@@ -89,6 +90,9 @@ export default function Page(){
  const [prog,setProg]=useState<Program|null>(null);
  const [sets,setSets]=useState<SetEntry[]>([]);
  const [sessions,setSessions]=useState<Sess[]>([]);
+ const [notes,setNotes]=useState<Note[]>([]);
+ const [noteText,setNoteText]=useState('');
+ const [noteAuthor,setNoteAuthor]=useState('AI trainer (pasted)');
  const [setsDraft,setSetsDraft]=useState<Record<string,SetDraft[]>>({});
  const [sessNote,setSessNote]=useState('');
  const [report,setReport]=useState<{text:string;file:string}|null>(null);
@@ -100,7 +104,7 @@ export default function Page(){
  const [saving,setSaving]=useState(false);
  const [tab,setTab]=useState<'mission'|'history'|'profile'>('mission');
 
- const load=async()=>{const r=await fetch('/api/state',{cache:'no-store'});if(!r.ok)throw new Error('Load failed');const data=await r.json();setEntries(data.exercises);setDays(data.days);setSets(data.sets||[]);setSessions(data.sessions||[]);setProfile(data.profile);setProg(data.program);};
+ const load=async()=>{const r=await fetch('/api/state',{cache:'no-store'});if(!r.ok)throw new Error('Load failed');const data=await r.json();setEntries(data.exercises);setDays(data.days);setSets(data.sets||[]);setSessions(data.sessions||[]);setNotes(data.notes||[]);setProfile(data.profile);setProg(data.program);};
  useEffect(()=>{setDate(todayKey());load().catch(()=>setMessage('Database unavailable. Check Docker logs.')).finally(()=>setLoading(false))},[]);
  useEffect(()=>{if(!message)return;const t=setTimeout(()=>setMessage(''),4000);return()=>clearTimeout(t)},[message]);
 
@@ -110,6 +114,7 @@ export default function Page(){
  const logs=useMemo(()=>entries.filter(e=>e.day===date),[entries,date]);
  const session_=sessions.find(x=>x.day===date);
  const confirmed=!!session_?.confirmed_at;
+ const dayNotes=notes.filter(n=>n.day===date);
  useEffect(()=>{setSessNote(sessions.find(x=>x.day===date)?.general_note??'')},[date,sessions]);
  const existingDay=days.find(d=>d.day===date);
  useEffect(()=>{const d=days.find(row=>row.day===date);setDaily({calories:String(d?.calories??''),protein:String(d?.protein??''),walk_minutes:String(d?.walk_minutes??''),weight:String(d?.weight??''),waist:String(d?.waist??''),notes:d?.notes??''});setDraft({});setSetsDraft({});setExpanded({});},[date,days]);
@@ -147,6 +152,14 @@ export default function Page(){
  }
  async function sendToTrainer(){
   try{setSaving(true);const r=await fetch('/api/report',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({day:date})});if(!r.ok)throw new Error();const d=await r.json();setReport({text:d.text,file:d.file});await load()}catch{setMessage('SAVE FAILED — REPORT NOT BUILT')}finally{setSaving(false)}
+ }
+ async function addNote(){
+  if(!noteText.trim())return;
+  try{setSaving(true);const r=await fetch('/api/trainer-note',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({day:date,author:noteAuthor,body:noteText})});if(!r.ok)throw new Error();setNoteText('');await load();setMessage('TRAINER NOTE SAVED')}catch{setMessage('SAVE FAILED — TRY AGAIN')}finally{setSaving(false)}
+ }
+ async function deleteNote(id:number){
+  if(!window.confirm('Delete this trainer note? Your workout data is not affected.'))return;
+  try{const r=await fetch('/api/trainer-note',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});if(!r.ok)throw new Error();await load();setMessage('NOTE DELETED')}catch{setMessage('SAVE FAILED — TRY AGAIN')}
  }
  async function copyReport(){if(!report)return;try{await navigator.clipboard.writeText(report.text);setMessage('REPORT COPIED')}catch{setMessage('COPY BLOCKED — SELECT TEXT MANUALLY')}}
  function effective(e:Exercise):DraftRow{const old=logs.find(x=>x.exercise_id===e.id);return draft[e.id]??{done:!!old?.done,weight:String(old?.weight??''),reps:old?.reps??'',notes:old?.notes??''}}
@@ -319,6 +332,23 @@ export default function Page(){
         <textarea readOnly rows={8} value={report.text} onFocus={e=>e.currentTarget.select()} aria-label="Trainer report"/>
         <button className="save" onClick={copyReport}><Copy size={14}/> COPY REPORT</button>
        </div>}
+      </div>}
+
+      {(plan.exercises.length>0||dayNotes.length>0)&&<div className="panel trainer-notes">
+       <Corners/>
+       <div className="panel-top"><span className="section-mark">TRAINER&apos;S NOTES</span><span className="counter">{dayNotes.length} ON FILE</span></div>
+       <h3>FEEDBACK ON THIS WORKOUT</h3>
+       {dayNotes.length===0&&<p className="empty-note">NO FEEDBACK YET. SEND THIS WORKOUT TO YOUR TRAINER, THEN PASTE THE REPLY BELOW.</p>}
+       {dayNotes.map(n=><article className="tnote" key={n.id}>
+        <header><span className="ai-tag">AI-GENERATED</span><b>{n.author}</b><time>{new Date(n.created_at.includes('T')?n.created_at:n.created_at.replace(' ','T')+'Z').toLocaleString()}</time><button className="note-del" onClick={()=>deleteNote(n.id)} aria-label="Delete note"><X size={13}/></button></header>
+        <div className="tnote-body">{n.body}</div>
+       </article>)}
+       <p className="disclaimer">AI feedback is a suggestion, not medical advice. It never changes your workout history, goals or program unless you change them yourself.</p>
+       <label className="full">ADD FEEDBACK<textarea rows={4} placeholder="Paste your trainer's reply here…" value={noteText} onChange={e=>setNoteText(e.target.value)}/></label>
+       <div className="session-actions">
+        <input className="author-input" aria-label="Who wrote this feedback" value={noteAuthor} onChange={e=>setNoteAuthor(e.target.value)} maxLength={80}/>
+        <button className="save" disabled={saving||!noteText.trim()} onClick={addNote}><Save size={14}/> SAVE FEEDBACK</button>
+       </div>
       </div>}
 
       <div className="panel safety">

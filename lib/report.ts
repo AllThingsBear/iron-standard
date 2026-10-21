@@ -26,6 +26,8 @@ function sessionBlock(day:string,wu:string){
     else if(!mine.length)out+='  - no set data recorded\n';
   }
   out+=`General note: ${sess?.general_note||'(none)'}\n`;
+  const notes=db().prepare('SELECT author,body,created_at FROM trainer_notes WHERE day=? ORDER BY id').all(day) as any[];
+  for(const n of notes)out+=`Previous trainer feedback (${n.author}, ${n.created_at}):\n${n.body.split('\n').map((l:string)=>'  > '+l).join('\n')}\n`;
   return out;
 }
 
