@@ -1,0 +1,12 @@
+services:
+  iron-standard:
+    build: .
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      DB_PATH: /app/data/iron-standard.db
+    volumes:
+      - iron_standard_data:/app/data
+    restart: unless-stopped
+volumes:
+  iron_standard_data:
