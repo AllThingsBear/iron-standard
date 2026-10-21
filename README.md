@@ -19,6 +19,7 @@ No accounts. No cloud. No telemetry. Your workouts, measurements and notes live 
 - Weekly workout schedule with a daily checklist and exercise instructions
 - Per-set logging: weight, reps, 0–10 pain score and a note for every set
 - Daily metrics: weight, waist, calories, protein, walking minutes, notes
+- Program editor: build your own week, edit sessions and exercises, or add from a built-in exercise library filtered to your equipment
 - First-run setup: imperial or metric, optional goals and targets, equipment, physical limitations, starter or empty program (everything optional, skippable)
 - After-action report and an optional **Send to trainer** export: a self-contained text report you can paste into any AI assistant (or read yourself), and a place to save the reply as clearly labelled, append-only feedback
 - Works fully offline; nothing leaves your machine unless you copy it out yourself
@@ -75,7 +76,7 @@ Everything is in one SQLite file. To back it up, stop the app and copy `data/iro
 - [x] Local profile and goals (no hardcoded personal data)
 - [x] Per-set logging, pain tracking, session notes, trainer report export
 - [x] Trainer feedback saved back onto each workout
-- [ ] Exercise library and program editor
+- [x] Program editor and exercise library (schedule, sessions, exercises)
 - [ ] Data export / import and in-app backup
 - [ ] Windows installer (Electron)
 - [ ] Optional AI integrations (local Claude CLI, bring-your-own API key)

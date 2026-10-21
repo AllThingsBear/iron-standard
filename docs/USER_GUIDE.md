@@ -23,6 +23,17 @@ The **Daily Mission** tab shows the session scheduled for the selected date. Use
 
 Pain scores matter: a trainer (human or AI) can only spot a trend if you record a number each time. 0 means none; 4 or higher is a stop-and-adjust signal.
 
+## Editing your program
+
+Open the **PROGRAM** tab to build your own week.
+
+- **Weekly schedule:** pick which session runs on each weekday (use a rest/open session for off days).
+- **Sessions:** create, duplicate or delete sessions and edit their title, subtitle and description.
+- **Exercises:** edit name, sets, reps or time, category, form instructions, an optional safety note and the equipment needed. Reorder with the arrows. Add a blank exercise or pick one from the built-in library (tick "only my equipment" to hide things you cannot do).
+- **Save:** changes only apply when you press **Save program**. **Discard** throws away unsaved edits. **Reset to starter** replaces everything with the neutral starter program (it asks first).
+
+Good to know: logged sets and notes are never deleted by editing. If you remove an exercise, its old logs stay in your database and still appear in trainer reports (marked "not in the current program"). Days show the session currently scheduled for that weekday, so changing the schedule changes how past dates are displayed.
+
 ## Progress
 
 The **Field Reports** tab lists every logged date. Click a row to open that day. The top of the dashboard shows starting weight, last logged weight and how far you are toward your goal.

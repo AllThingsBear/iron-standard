@@ -410,3 +410,39 @@ footer span{color:var(--tan)}
 .panel.trainer-notes label.full{display:block;margin-top:14px;font-size:10px;color:var(--dim);font-weight:700;font-family:var(--font-mono);letter-spacing:.12em}
 .panel.trainer-notes textarea{display:block;width:100%;margin-top:7px;background:var(--bg);color:var(--text);border:1px solid var(--edge-2);padding:11px 12px;font-family:var(--font-body);font-size:14px;resize:vertical;min-height:84px}
 .author-input{flex:1;min-width:160px;background:var(--bg);color:var(--text-2);border:1px solid var(--edge-2);padding:11px 12px;font-family:var(--font-mono);font-size:12px}
+
+/* ===== program editor ===== */
+.program-panel{margin-top:18px;position:relative}
+.program-editor h3{margin:22px 0 10px;font-family:var(--font-mono);font-size:11px;letter-spacing:.16em;color:var(--tan)}
+.program-editor h4{margin:16px 0 8px;font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;color:var(--dim)}
+.program-editor input,.program-editor select,.program-editor textarea{background:var(--bg);color:var(--text);border:1px solid var(--edge-2);padding:9px 10px;font-family:var(--font-mono);font-size:13px;width:100%;margin-top:6px;border-radius:0}
+.program-editor textarea{font-family:var(--font-body);resize:vertical}
+.program-editor input:focus,.program-editor select:focus,.program-editor textarea:focus{outline:0;border-color:var(--tan)}
+.program-editor label{display:block;font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;font-weight:700;color:var(--dim)}
+.sched-edit{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.sched-edit label span{color:var(--tan)}
+.ed-head{display:flex;align-items:center;justify-content:space-between}
+.ed-session{border:1px solid var(--edge-2);background:var(--sunken);margin-bottom:10px}
+.ed-session.is-open{border-color:var(--edge-hi)}
+.ed-session>header,.ed-ex>header{display:flex;align-items:center;gap:8px}
+.ed-toggle{flex:1;min-width:0;display:flex;align-items:center;gap:10px;text-align:left;padding:12px 14px;background:transparent;border:0}
+.ed-toggle .ed-title{font-family:var(--font-display);font-size:20px;letter-spacing:.02em;color:var(--text)}
+.ed-toggle small{font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;color:var(--mute);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ed-tools{display:flex;gap:6px;padding-right:10px}
+.program-editor .icon.sm,.program-editor .ghost.sm{width:auto;margin:0;display:inline-flex;align-items:center;gap:7px;padding:8px 10px;border:1px solid var(--edge-2);background:var(--bg);color:var(--text-2);font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;font-weight:700}
+.program-editor .icon.sm:disabled{opacity:.35}
+.program-editor .danger:hover{color:#e89a8d;border-color:var(--red)}
+.ed-body{padding:4px 14px 16px;border-top:1px solid var(--edge-2)}
+.ed-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px;padding:0 2px 14px}
+.ed-grid .full{grid-column:1/-1}
+.ed-ex{border:1px solid var(--edge-2);background:var(--panel);margin-bottom:8px}
+.ed-ex .ed-title{font-size:17px}
+.ed-ex .ed-grid{padding:0 14px 14px}
+.ed-add{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
+.ed-add select{width:auto;min-width:240px;margin:0}
+.program-editor .eq-filter{display:flex;align-items:center;gap:6px;font-weight:400;letter-spacing:.06em}
+.program-editor .eq-filter input{width:auto;margin:0}
+.ed-bar{position:sticky;bottom:0;z-index:5;display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:22px;padding:12px 14px;background:#0c0e0cf2;border:1px solid var(--edge-hi);backdrop-filter:blur(4px)}
+.ed-bar>span{flex:1;font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;color:var(--mute)}
+.ed-bar>span.dirty{color:var(--amber)}
+@media (max-width:640px){.ed-grid{grid-template-columns:1fr}.ed-toggle small{display:none}.ed-bar .save{flex:1}}

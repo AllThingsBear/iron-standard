@@ -2,6 +2,14 @@
 
 All notable changes are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/) and the project uses [Semantic Versioning](https://semver.org/) (0.x = pre-release).
 
+## [Unreleased]
+
+### Added
+- Program editor (new PROGRAM tab): weekly schedule, sessions, exercises, reordering, duplicate/delete, reset to starter
+- Built-in exercise library (30 generic exercises) filtered by the equipment in your profile
+- Server-side program validation (id uniqueness, length and range limits); rejected saves change nothing
+- Trainer reports now include logged exercises that were later removed from the program
+
 ## [0.1.0] - 2026-10-20
 
 First public pre-release.

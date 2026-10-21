@@ -2,6 +2,7 @@
 import {useEffect,useMemo,useState} from 'react';
 import {Activity,CalendarDays,Check,ChevronLeft,ChevronRight,ClipboardList,Crosshair,Dumbbell,Flag,HeartPulse,NotebookPen,Save,Send,Copy,Plus,ShieldAlert,Target,TrendingDown,UserCog,X} from 'lucide-react';
 import {Exercise,Program} from '../lib/program';
+import ProgramEditor from './ProgramEditor';
 import {Profile,defaultProfile,EQUIPMENT,wUnit,sUnit} from '../lib/units';
 
 type Entry={day:string;exercise_id:string;done:number;weight:number|null;reps:string;notes:string};
@@ -102,7 +103,7 @@ export default function Page(){
  const [draft,setDraft]=useState<Record<string,DraftRow>>({});
  const [daily,setDaily]=useState({calories:'',protein:'',walk_minutes:'',weight:'',waist:'',notes:''});
  const [saving,setSaving]=useState(false);
- const [tab,setTab]=useState<'mission'|'history'|'profile'>('mission');
+ const [tab,setTab]=useState<'mission'|'history'|'profile'|'program'>('mission');
 
  const load=async()=>{const r=await fetch('/api/state',{cache:'no-store'});if(!r.ok)throw new Error('Load failed');const data=await r.json();setEntries(data.exercises);setDays(data.days);setSets(data.sets||[]);setSessions(data.sessions||[]);setNotes(data.notes||[]);setProfile(data.profile);setProg(data.program);};
  useEffect(()=>{const q=new URLSearchParams(window.location.search).get('date');setDate(q&&/^\d{4}-\d{2}-\d{2}$/.test(q)?q:todayKey());load().catch(()=>setMessage('Database unavailable. Check Docker logs.')).finally(()=>setLoading(false))},[]);
@@ -168,6 +169,12 @@ export default function Page(){
  async function toggle(e:Exercise,checked:boolean){const v=effective(e);update(e,'done',checked);const body={...v,done:checked};try{const r=await fetch('/api/log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({day:date,exercise_id:e.id,...body})});if(!r.ok)throw Error();await load()}catch{setMessage('SAVE FAILED — RETRY CHECKBOX')}}
  async function saveProfile(next:Profile,programChoice?:'starter'|'empty'){
   try{const r=await fetch('/api/profile',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({profile:{...next,onboarded:true},programChoice})});if(!r.ok)throw new Error();await load();setMessage('PROFILE SAVED')}catch{setMessage('SAVE FAILED — TRY AGAIN')}
+ }
+ async function saveProgram(next:Program):Promise<boolean>{
+  try{const r=await fetch('/api/program',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({program:next})});if(!r.ok)throw new Error();await load();setMessage('PROGRAM SAVED');return true}catch{setMessage('SAVE FAILED — CHECK THE PROGRAM FIELDS');return false}
+ }
+ async function resetProgram(){
+  try{const r=await fetch('/api/program',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({reset:'starter'})});if(!r.ok)throw new Error();await load();setMessage('PROGRAM RESET TO STARTER')}catch{setMessage('SAVE FAILED — TRY AGAIN')}
  }
  async function saveDaily(){try{setSaving(true);const r=await fetch('/api/metrics',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({day:date,...daily})});if(!r.ok)throw new Error();await load();setMessage('DAILY INTEL SAVED')}catch{setMessage('SAVE FAILED — TRY AGAIN')}finally{setSaving(false)}}
  const jumpToWeekday=(i:number)=>{const [y,m,d]=date.split('-').map(Number);const current=new Date(y,m-1,d);const target=new Date(current);target.setDate(target.getDate()+i-dayIndex);setDate(dateKey(target))};
@@ -239,6 +246,7 @@ export default function Page(){
    <div className="nav" role="tablist" aria-label="Views">
     <button role="tab" aria-selected={tab==='mission'} className={tab==='mission'?'selected':''} onClick={()=>setTab('mission')}><ClipboardList size={16}/> DAILY MISSION</button>
     <button role="tab" aria-selected={tab==='history'} className={tab==='history'?'selected':''} onClick={()=>setTab('history')}><TrendingDown size={16}/> FIELD REPORTS</button>
+    <button role="tab" aria-selected={tab==='program'} className={tab==='program'?'selected':''} onClick={()=>setTab('program')}><Dumbbell size={16}/> PROGRAM</button>
     <button role="tab" aria-selected={tab==='profile'} className={tab==='profile'?'selected':''} onClick={()=>setTab('profile')}><UserCog size={16}/> PROFILE</button>
     <span>{hasGoal?<>{fmtN(START!)} → {fmtN(GOAL!)} {wu}</>:'NO GOAL SET'}{profile.kcal!=null&&<> <b>//</b> {profile.kcal} KCAL</>}{profile.protein!=null&&<> <b>//</b> {profile.protein}G PROTEIN</>}</span>
    </div>
@@ -391,7 +399,13 @@ export default function Page(){
       </div>
      </aside>
     </div>
-   </>:tab==='profile'?<section className="panel profile-panel">
+   </>:tab==='program'?<section className="panel program-panel">
+    <Corners/>
+    <div className="panel-top"><span className="section-mark">PROGRAM <span className="sep">//</span> EDITOR</span></div>
+    <h2>BUILD YOUR WEEK</h2>
+    <p className="plan-intro">Schedule sessions, edit exercises, or pull from the library. Stored only on this computer.</p>
+    <ProgramEditor key={JSON.stringify(prog)} program={prog} equipment={profile.equipment} onSave={saveProgram} onReset={resetProgram}/>
+   </section>:tab==='profile'?<section className="panel profile-panel">
     <Corners/>
     <div className="panel-top"><span className="section-mark">PROFILE <span className="sep">//</span> SETTINGS</span></div>
     <h2>YOUR STANDARD</h2>

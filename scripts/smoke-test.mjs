@@ -65,6 +65,30 @@ test('session confirm, trainer note, and report', async () => {
   assert.match(r.json.text, /sore knee/);
   assert.match(r.json.text, /Test coach/);
 });
+test('program editor saves, validates, preserves ids, and reports removed exercises', async () => {
+  const day7 = (a, b) => ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'].map((d, i) => ({ day: d, session: i % 2 ? b : a }));
+  const prog = {
+    sessions: {
+      chestA: { id: 'chestA', title: 'Chest', subtitle: '', description: '', exercises: [{ id: 'pushupA', name: 'Push-ups', sets: 99, reps: '10', category: 'strength', description: '', equipment: [] }] },
+      rest: { id: 'rest', title: 'Rest', subtitle: '', description: '', exercises: [] }
+    },
+    week: day7('chestA', 'rest')
+  };
+  assert.equal((await call('/api/program', { program: prog })).status, 200);
+  const s = await state();
+  const ex = s.program.sessions.chestA.exercises[0];
+  assert.equal(ex.id, 'pushupA', 'mixed-case ids must be preserved');
+  assert.equal(ex.sets, 20, 'sets are clamped');
+  assert.equal(ex.category, 'STRENGTH');
+  const dup = structuredClone(prog); dup.sessions.rest.exercises = [{ id: 'pushupA', name: 'X', sets: 1, reps: '1', category: 'CORE', description: '' }];
+  assert.equal((await call('/api/program', { program: dup })).status, 400, 'duplicate exercise ids rejected');
+  assert.equal((await call('/api/program', { program: { sessions: {}, week: [] } })).status, 400);
+  assert.equal((await state()).program.sessions.chestA.exercises[0].id, 'pushupA', 'rejected saves change nothing');
+  // logs for an exercise no longer in the program still reach the trainer report
+  await call('/api/sets', { day: '2026-01-06', exercise_id: 'removedMove', sets: [{ weight: 5, reps: 5, pain: 0, notes: 'kept' }] });
+  const r = await call('/api/report', { day: '2026-01-06' });
+  assert.match(r.json.text, /removedMove \[not in the current program/);
+});
 test('invalid dates and notes are rejected', async () => {
   assert.equal((await call('/api/session', { day: 'nope' })).status, 400);
   assert.equal((await call('/api/trainer-note', { day: '2026-01-05', body: '   ' })).status, 400);

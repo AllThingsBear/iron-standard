@@ -25,6 +25,13 @@ function sessionBlock(day:string,wu:string){
     if(!mine.length&&row&&(row.weight!=null||row.reps||row.notes))out+=`  - (legacy log) ${v(row.weight)} ${wu}, reps ${v(row.reps)}${row.notes?`, note: ${row.notes}`:''}\n`;
     else if(!mine.length)out+='  - no set data recorded\n';
   }
+  const planned=new Set(plan.exercises.map(e=>e.id));
+  const orphanIds=[...new Set([...sets.map(s=>s.exercise_id),...ex.filter(x=>x.done||x.weight!=null||x.reps||x.notes).map(x=>x.exercise_id)])].filter(id=>!planned.has(id));
+  for(const id of orphanIds){
+    out+=`- ${id} [not in the current program; logged on this date] \n`;
+    for(const s of sets.filter(x=>x.exercise_id===id))out+=`  - set ${s.set_no}: ${v(s.weight)} ${wu} x ${v(s.reps)} reps, pain ${v(s.pain)}/10${s.notes?`, note: ${s.notes}`:''}\n`;
+    const row=ex.find(x=>x.exercise_id===id);if(row&&(row.weight!=null||row.reps||row.notes))out+=`  - (legacy log) ${v(row.weight)} ${wu}, reps ${v(row.reps)}${row.notes?`, note: ${row.notes}`:''}\n`;
+  }
   out+=`General note: ${sess?.general_note||'(none)'}\n`;
   const notes=db().prepare('SELECT author,body,created_at FROM trainer_notes WHERE day=? ORDER BY id').all(day) as any[];
   for(const n of notes)out+=`Previous trainer feedback (${n.author}, ${n.created_at}):\n${n.body.split('\n').map((l:string)=>'  > '+l).join('\n')}\n`;
