@@ -1,0 +1,40 @@
+# Contributing
+
+Thanks for helping! IRON STANDARD is a small, local-first project. Please keep changes focused.
+
+## Ground rules
+
+- **Local-first and private.** No telemetry, analytics, ads, accounts, or required cloud services. Nothing leaves the user's machine without an explicit user action.
+- **No personal data in the repo.** Never commit databases, reports, backups, API keys or real health information. Starter programs and examples must be generic.
+- **Safety first.** This is a training journal, not medical advice. Do not add features that prescribe medical treatment or silently change a user's goals or history.
+- **Keep it simple.** Prefer small, readable changes over new dependencies.
+
+## Development
+
+```bash
+git clone https://github.com/AllThingsBear/iron-standard.git
+cd iron-standard
+npm install
+npm run dev        # http://localhost:4871
+```
+
+Before opening a pull request:
+
+```bash
+npm run typecheck
+npm run build      # don't run while `npm run dev` is running from the same folder
+npm test           # smoke test: boots the built app on a temporary database
+```
+
+## Project layout
+
+- `app/`: Next.js pages, styles and API routes (`app/api/*`)
+- `lib/`: database (`db.ts`), profile/settings, starter programs, report builder
+- `scripts/smoke-test.mjs`: end-to-end API test
+- `docs/`: user guide, troubleshooting, screenshots
+
+## Pull requests
+
+Describe what changed and why, note anything user-visible, and update `CHANGELOG.md`. Screenshots help for UI changes (use sample data only).
+
+By contributing you agree your work is released under the project's MIT license.

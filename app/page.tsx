@@ -105,7 +105,7 @@ export default function Page(){
  const [tab,setTab]=useState<'mission'|'history'|'profile'>('mission');
 
  const load=async()=>{const r=await fetch('/api/state',{cache:'no-store'});if(!r.ok)throw new Error('Load failed');const data=await r.json();setEntries(data.exercises);setDays(data.days);setSets(data.sets||[]);setSessions(data.sessions||[]);setNotes(data.notes||[]);setProfile(data.profile);setProg(data.program);};
- useEffect(()=>{setDate(todayKey());load().catch(()=>setMessage('Database unavailable. Check Docker logs.')).finally(()=>setLoading(false))},[]);
+ useEffect(()=>{const q=new URLSearchParams(window.location.search).get('date');setDate(q&&/^\d{4}-\d{2}-\d{2}$/.test(q)?q:todayKey());load().catch(()=>setMessage('Database unavailable. Check Docker logs.')).finally(()=>setLoading(false))},[]);
  useEffect(()=>{if(!message)return;const t=setTimeout(()=>setMessage(''),4000);return()=>clearTimeout(t)},[message]);
 
  const week=prog?.week??[]; const program=prog?.sessions??{};
