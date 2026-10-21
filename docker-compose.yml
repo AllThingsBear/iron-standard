@@ -2,7 +2,7 @@ services:
   iron-standard:
     build: .
     ports:
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:4871:3000"
     environment:
       DB_PATH: /app/data/iron-standard.db
     volumes:

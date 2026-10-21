@@ -20,8 +20,10 @@ Requires Node.js 20+ (22 recommended).
 
 ```bash
 npm install
-npm run dev        # http://localhost:3000, bound to 127.0.0.1 only
+npm run dev        # http://localhost:4871, bound to 127.0.0.1 only
 ```
+
+IRON STANDARD uses port **4871** (an uncommon port, to avoid clashing with other local apps). To use another one: `npm run dev -- -p 5000`.
 
 Production build:
 
@@ -38,7 +40,7 @@ Your data is stored in `./data/iron-standard.db` (override with the `DB_PATH` en
 docker compose up --build -d
 ```
 
-Open http://localhost:3000. The container is published on `127.0.0.1` only, and data persists in the `iron_standard_data` volume. Stop with `docker compose down` (do **not** add `-v` unless you intend to delete your data).
+Open http://localhost:4871. The container is published on `127.0.0.1` only (change the host port on the left of `4871:3000` in `docker-compose.yml` if it clashes), and data persists in the `iron_standard_data` volume. Stop with `docker compose down` (do **not** add `-v` unless you intend to delete your data).
 
 > The native install and the Docker install use different databases.
 
@@ -53,7 +55,7 @@ Everything is in one SQLite file. To back it up, copy `data/iron-standard.db` (a
 - [ ] Trainer feedback saved back onto each workout
 - [ ] Exercise library and program editor
 - [ ] Data export / import and in-app backup
-- [ ] Windows installer (Electron)
+- [ ] Windows installer (Electron) — for now, run it from source in your browser (see above)
 - [ ] Optional AI integrations (local Claude CLI, bring-your-own API key)
 
 ## Disclaimer
