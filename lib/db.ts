@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 const dbfile = process.env.DB_PATH || path.join(process.cwd(),'data','iron-standard.db');
 export const dataDir=path.dirname(dbfile);
+export const dbPath=dbfile;
 let instance: Database.Database | null = null;
 export function db(){
   if(!instance){

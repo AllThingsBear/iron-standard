@@ -8,6 +8,7 @@ All notable changes are documented here. The format follows [Keep a Changelog](h
 - Program editor (new PROGRAM tab): weekly schedule, sessions, exercises, reordering, duplicate/delete, reset to starter
 - Built-in exercise library (30 generic exercises) filtered by the equipment in your profile
 - Server-side program validation (id uniqueness, length and range limits); rejected saves change nothing
+- DATA tab: full JSON export, sets CSV export, validated import (merge or replace), one-click SQLite backups with download and restore, and a view of where your files are stored. Imports and restores take an automatic safety backup first; the newest 30 backups are kept
 - Original stick-figure illustrations (start/finish poses with the working muscles highlighted) for 24 common exercises, matched by exercise name, so custom exercises pick them up too
 - Trainer reports now include logged exercises that were later removed from the program
 

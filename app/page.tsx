@@ -1,8 +1,9 @@
 'use client';
 import {useEffect,useMemo,useState} from 'react';
-import {Activity,CalendarDays,Check,ChevronLeft,ChevronRight,ClipboardList,Crosshair,Dumbbell,Flag,HeartPulse,NotebookPen,Save,Send,Copy,Plus,ShieldAlert,Target,TrendingDown,UserCog,X} from 'lucide-react';
+import {Activity,CalendarDays,Check,ChevronLeft,ChevronRight,ClipboardList,Crosshair,Dumbbell,Flag,HeartPulse,NotebookPen,Save,Send,Copy,Plus,ShieldAlert,Database,Target,TrendingDown,UserCog,X} from 'lucide-react';
 import {Exercise,Program} from '../lib/program';
 import ProgramEditor from './ProgramEditor';
+import DataPanel from './DataPanel';
 import {figureFor} from '../lib/figures';
 import {Profile,defaultProfile,EQUIPMENT,wUnit,sUnit} from '../lib/units';
 
@@ -104,7 +105,7 @@ export default function Page(){
  const [draft,setDraft]=useState<Record<string,DraftRow>>({});
  const [daily,setDaily]=useState({calories:'',protein:'',walk_minutes:'',weight:'',waist:'',notes:''});
  const [saving,setSaving]=useState(false);
- const [tab,setTab]=useState<'mission'|'history'|'profile'|'program'>('mission');
+ const [tab,setTab]=useState<'mission'|'history'|'profile'|'program'|'data'>('mission');
 
  const load=async()=>{const r=await fetch('/api/state',{cache:'no-store'});if(!r.ok)throw new Error('Load failed');const data=await r.json();setEntries(data.exercises);setDays(data.days);setSets(data.sets||[]);setSessions(data.sessions||[]);setNotes(data.notes||[]);setProfile(data.profile);setProg(data.program);};
  useEffect(()=>{const q=new URLSearchParams(window.location.search).get('date');setDate(q&&/^\d{4}-\d{2}-\d{2}$/.test(q)?q:todayKey());load().catch(()=>setMessage('Database unavailable. Check Docker logs.')).finally(()=>setLoading(false))},[]);
@@ -248,6 +249,7 @@ export default function Page(){
     <button role="tab" aria-selected={tab==='mission'} className={tab==='mission'?'selected':''} onClick={()=>setTab('mission')}><ClipboardList size={16}/> DAILY MISSION</button>
     <button role="tab" aria-selected={tab==='history'} className={tab==='history'?'selected':''} onClick={()=>setTab('history')}><TrendingDown size={16}/> FIELD REPORTS</button>
     <button role="tab" aria-selected={tab==='program'} className={tab==='program'?'selected':''} onClick={()=>setTab('program')}><Dumbbell size={16}/> PROGRAM</button>
+    <button role="tab" aria-selected={tab==='data'} className={tab==='data'?'selected':''} onClick={()=>setTab('data')}><Database size={16}/> DATA</button>
     <button role="tab" aria-selected={tab==='profile'} className={tab==='profile'?'selected':''} onClick={()=>setTab('profile')}><UserCog size={16}/> PROFILE</button>
     <span>{hasGoal?<>{fmtN(START!)} → {fmtN(GOAL!)} {wu}</>:'NO GOAL SET'}{profile.kcal!=null&&<> <b>//</b> {profile.kcal} KCAL</>}{profile.protein!=null&&<> <b>//</b> {profile.protein}G PROTEIN</>}</span>
    </div>
@@ -401,7 +403,12 @@ export default function Page(){
       </div>
      </aside>
     </div>
-   </>:tab==='program'?<section className="panel program-panel">
+   </>:tab==='data'?<section className="panel data-section">
+    <Corners/>
+    <div className="panel-top"><span className="section-mark">DATA <span className="sep">//</span> EXPORT · IMPORT · BACKUP</span></div>
+    <h2>YOUR DATA, YOUR COMPUTER</h2>
+    <DataPanel onChanged={load} notify={setMessage}/>
+   </section>:tab==='program'?<section className="panel program-panel">
     <Corners/>
     <div className="panel-top"><span className="section-mark">PROGRAM <span className="sep">//</span> EDITOR</span></div>
     <h2>BUILD YOUR WEEK</h2>

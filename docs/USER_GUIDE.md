@@ -46,6 +46,20 @@ After you confirm a workout, **Send to trainer** builds a self-contained Markdow
 - Paste the reply into **Trainer's Notes → Add feedback**. Feedback is labelled **AI-GENERATED**, is append-only, and never changes your workout history, goals or program.
 - Previous feedback is included in later reports so the trainer can see its own earlier advice.
 
+## Backing up, exporting and moving your data
+
+The **DATA** tab shows exactly where your files are and has everything you need:
+
+- **Download full export (.json):** a complete copy of your profile, program, workouts, sets, metrics and trainer notes. Keep one somewhere safe, or use it to move to another computer.
+- **Sets as spreadsheet (.csv):** every set you have logged, for Excel or Google Sheets. This is a one-way export for analysis.
+- **Import:** choose an export file, check the summary, then pick a mode.
+  - **Merge** adds the file's records to what you have (records for the same date and exercise are overwritten by the file; nothing else is touched; your profile and program are left alone).
+  - **Replace everything** swaps all your data, including profile and program, for the file's contents.
+  - A bad or incompatible file is rejected before anything changes, and a safety backup is always taken first.
+- **Back up now:** saves a snapshot of the whole database to `data/backups/`. Download any backup, or **Restore** one (this replaces current data, after taking a safety backup of it). The newest 30 backups are kept.
+
+To move to another computer: export on the old one, install IRON STANDARD on the new one, and import the file (choose Replace).
+
 ## Your data
 
 All data lives in `data/iron-standard.db` (SQLite). Stop the app and copy the file (and `-wal` / `-shm` if present) to back it up. See the README for Docker backup and restore.

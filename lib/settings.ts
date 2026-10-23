@@ -58,3 +58,9 @@ export function sanitizeProgram(input:any):Program{
   return {sessions,week};
 }
 export function saveProgram(input:unknown):Program{const p=sanitizeProgram(input);write('program',p);return p}
+
+// ---- import / restore ----
+export function importSettings(profile:unknown,program:unknown){
+  if(profile&&typeof profile==='object'){write('profile',defaultProfile);saveProfile(profile as Partial<Profile>)}
+  if(program)saveProgram(program);
+}

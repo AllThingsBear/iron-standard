@@ -20,6 +20,7 @@ No accounts. No cloud. No telemetry. Your workouts, measurements and notes live 
 - Per-set logging: weight, reps, 0–10 pain score and a note for every set
 - Daily metrics: weight, waist, calories, protein, walking minutes, notes
 - Exercise illustrations: original start/finish stick figures with the working muscles highlighted (24 common movements; free to use, drawn for this project)
+- Your data, your files: full JSON export, spreadsheet (CSV) export of your sets, import (merge or replace) with automatic safety backups, one-click SQLite backups with download and restore, and an in-app view of exactly where your files live
 - Program editor: build your own week, edit sessions and exercises, or add from a built-in exercise library filtered to your equipment
 - First-run setup: imperial or metric, optional goals and targets, equipment, physical limitations, starter or empty program (everything optional, skippable)
 - After-action report and an optional **Send to trainer** export: a self-contained text report you can paste into any AI assistant (or read yourself), and a place to save the reply as clearly labelled, append-only feedback
@@ -70,7 +71,7 @@ Open http://localhost:4871. The container is published on `127.0.0.1` only (chan
 
 ## Your data
 
-Everything is in one SQLite file. To back it up, stop the app and copy `data/iron-standard.db` (and its `-wal`/`-shm` files if present). Trainer reports are saved as Markdown in `data/reports/`. The `data/` folder is git-ignored, so `git pull` never touches it.
+Open the **DATA** tab in the app to see where everything is stored, download an export, create or restore a backup, and import data from another computer. Everything is in one SQLite file (`data/iron-standard.db`); backups go to `data/backups/`. Trainer reports are saved as Markdown in `data/reports/`. The `data/` folder is git-ignored, so `git pull` never touches it.
 
 ## Roadmap
 
@@ -78,7 +79,7 @@ Everything is in one SQLite file. To back it up, stop the app and copy `data/iro
 - [x] Per-set logging, pain tracking, session notes, trainer report export
 - [x] Trainer feedback saved back onto each workout
 - [x] Program editor and exercise library (schedule, sessions, exercises)
-- [ ] Data export / import and in-app backup
+- [x] Data export / import and in-app backup
 - [ ] Windows installer (Electron)
 - [ ] Optional AI integrations (local Claude CLI, bring-your-own API key)
 

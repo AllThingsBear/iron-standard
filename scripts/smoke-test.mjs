@@ -89,6 +89,47 @@ test('program editor saves, validates, preserves ids, and reports removed exerci
   const r = await call('/api/report', { day: '2026-01-06' });
   assert.match(r.json.text, /removedMove \[not in the current program/);
 });
+test('export, import (merge + replace), backup, restore', async () => {
+  const exp = await (await fetch(BASE + '/api/export')).json();
+  assert.equal(exp.format, 'iron-standard-export');
+  assert.ok(exp.set_log.length >= 1 && exp.trainer_notes.length >= 1);
+  const csv = await (await fetch(BASE + '/api/export?format=csv')).text();
+  assert.match(csv.split('\n')[0], /^date,exercise,exercise_id,set,weight_kg,reps,pain_0_10,note$/);
+  const before = await state();
+  // merge twice is idempotent (no duplicate trainer notes or sets)
+  assert.equal((await call('/api/import', { data: exp, mode: 'merge' })).status, 200);
+  const r2 = await call('/api/import', { data: exp, mode: 'merge' });
+  assert.equal(r2.status, 200);
+  assert.equal(r2.json.counts.trainer_notes, 0, 'duplicate notes are not re-added');
+  assert.ok(r2.json.backup && /pre-import/.test(r2.json.backup), 'a safety backup is taken first');
+  const afterMerge = await state();
+  assert.equal(afterMerge.sets.length, before.sets.length);
+  assert.equal(afterMerge.notes.length, before.notes.length);
+  // a bad file is rejected and changes nothing
+  const bad = structuredClone(exp); bad.set_log.push({ day: 'not-a-date', exercise_id: 'x', set_no: 1 });
+  assert.equal((await call('/api/import', { data: bad, mode: 'replace' })).status, 400);
+  assert.equal((await call('/api/import', { data: { format: 'something-else' }, mode: 'replace' })).status, 400);
+  assert.equal((await state()).sets.length, before.sets.length);
+  // backup, wipe via replace-import of an empty export, then restore
+  const b = await call('/api/backup', {});
+  assert.equal(b.status, 200);
+  const empty = { format: 'iron-standard-export', version: 1 };
+  assert.equal((await call('/api/import', { data: empty, mode: 'replace' })).status, 200);
+  assert.equal((await state()).sets.length, 0, 'replace removed the data');
+  const rr = await call('/api/backup/restore', { name: b.json.name });
+  assert.equal(rr.status, 200);
+  const restored = await state();
+  assert.equal(restored.sets.length, before.sets.length);
+  assert.equal(restored.notes.length, before.notes.length);
+  assert.equal(restored.profile.units, 'metric');
+  assert.equal(restored.program.sessions.chestA.exercises[0].id, 'pushupA');
+});
+test('backup names cannot escape the backups folder', async () => {
+  assert.equal((await call('/api/backup/restore', { name: '../test.db' })).status, 400);
+  assert.equal((await call('/api/backup/restore', { name: 'iron-standard-x/../../y.db' })).status, 400);
+  assert.equal((await fetch(BASE + '/api/backup/..%2F..%2Fetc%2Fpasswd')).status, 400);
+  assert.equal((await fetch(BASE + '/api/backup/iron-standard-nope.db')).status, 404);
+});
 test('invalid dates and notes are rejected', async () => {
   assert.equal((await call('/api/session', { day: 'nope' })).status, 400);
   assert.equal((await call('/api/trainer-note', { day: '2026-01-05', body: '   ' })).status, 400);
