@@ -3,6 +3,7 @@ import {useEffect,useMemo,useState} from 'react';
 import {Activity,CalendarDays,Check,ChevronLeft,ChevronRight,ClipboardList,Crosshair,Dumbbell,Flag,HeartPulse,NotebookPen,Save,Send,Copy,Plus,ShieldAlert,Target,TrendingDown,UserCog,X} from 'lucide-react';
 import {Exercise,Program} from '../lib/program';
 import ProgramEditor from './ProgramEditor';
+import {figureFor} from '../lib/figures';
 import {Profile,defaultProfile,EQUIPMENT,wUnit,sUnit} from '../lib/units';
 
 type Entry={day:string;exercise_id:string;done:number;weight:number|null;reps:string;notes:string};
@@ -304,6 +305,7 @@ export default function Page(){
          </div>
          <button className={'expand '+(open?'is-open':'')} onClick={()=>setExpanded(x=>({...x,[e.id]:!x[e.id]}))} aria-expanded={open} aria-controls={`details-${e.id}`}><NotebookPen size={15}/><span>{open?'CLOSE':'LOG SET'}</span></button>
         </div>
+        {figureFor(e.name)&&<img className="exercise-fig" src={figureFor(e.name)!} alt={`${e.name}: start and finish positions`} loading="lazy" width="360" height="215"/>}
         <p className="exercise-desc">{e.description}</p>
         {e.caution&&<p className="caution"><ShieldAlert size={15}/><span><b>CAUTION</b> {e.caution}</span></p>}
         {open&&<div className="exercise-details sets-editor" id={`details-${e.id}`}>

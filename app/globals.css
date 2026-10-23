@@ -446,3 +446,7 @@ footer span{color:var(--tan)}
 .ed-bar>span{flex:1;font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;color:var(--mute)}
 .ed-bar>span.dirty{color:var(--amber)}
 @media (max-width:640px){.ed-grid{grid-template-columns:1fr}.ed-toggle small{display:none}.ed-bar .save{flex:1}}
+
+/* ===== exercise figures ===== */
+.exercise-fig{display:block;width:240px;max-width:calc(100% - 72px);height:auto;margin:12px 0 0 70px;background:var(--sunken);border:1px solid var(--edge);padding:6px 4px 2px}
+@media (max-width:640px){.exercise-fig{margin-left:0;max-width:100%;width:100%}}
