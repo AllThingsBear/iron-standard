@@ -40,6 +40,8 @@ const mock = http.createServer((req, res) => {
     res.setHeader('Content-Type', 'application/json');
     if (req.url === '/v1/chat/completions') return res.end(JSON.stringify({ choices: [{ message: { content: JSON.stringify(body).includes('connectivity test') ? 'OK' : '<think>hidden reasoning</think>' + String.fromCharCode(10) + REPLY } }] }));
     if (req.url === '/v1/messages') return res.end(JSON.stringify({ content: [{ type: 'text', text: JSON.stringify(body).includes('connectivity test') ? 'OK' : REPLY }] }));
+    if (req.url === '/api/tags') return res.end(JSON.stringify({ models: [{ name: 'gemma4:12b', size: 8000000000 }, { name: 'iron-standard-trainer:latest', size: 8000000000 }] }));
+    if (req.url === '/api/create') { seen.push({ url: '/api/create', body }); return res.end(JSON.stringify({ status: 'success' })); }
     res.statusCode = 404; res.end('{}');
   });
 }).listen(MOCK_PORT, '127.0.0.1');
@@ -196,6 +198,23 @@ test('AI trainer: key is write-only, reply saved as an AI-labelled note, picks a
   assert.ok(!(await (await fetch(BASE + '/api/export')).text()).includes('SECRET'), 'export must not contain the key');
   assert.equal((await call('/api/ai/config', { provider: 'none', clearKey: true })).status, 200);
   assert.match(await (await fetch(BASE + '/api/ai/config')).text(), /"hasKey":false/);
+});
+test('Ollama helper: lists models, creates the app-scoped model, only talks to loopback', async () => {
+  assert.equal((await call('/api/ai/config', { provider: 'openai', baseUrl: `http://127.0.0.1:${MOCK_PORT}/v1`, model: 'x' })).status, 200);
+  const m = await call('/api/ai/ollama', { action: 'models' });
+  assert.equal(m.status, 200); assert.equal(m.json.running, true);
+  assert.deepEqual(m.json.models.map(x => x.name), ['gemma4:12b', 'iron-standard-trainer:latest']);
+  const p = await call('/api/ai/ollama', { action: 'prepare', from: 'gemma4:12b' });
+  assert.equal(p.status, 200); assert.equal(p.json.model, 'iron-standard-trainer');
+  const made = seen.filter(s => s.url === '/api/create').pop().body;
+  assert.equal(made.from, 'gemma4:12b'); assert.equal(made.parameters.num_ctx, 16384);
+  assert.equal((await call('/api/ai/ollama', { action: 'prepare', from: 'bad name; rm -rf' })).status, 400);
+  assert.equal((await call('/api/ai/ollama', { action: 'nope' })).status, 400);
+  // a non-loopback configured URL must never be contacted: it falls back to the default local address
+  assert.equal((await call('/api/ai/config', { provider: 'openai', baseUrl: 'https://evil.example.com/v1' })).status, 200);
+  const m2 = await call('/api/ai/ollama', { action: 'models' });
+  assert.ok(m2.json.origin.startsWith('http://localhost:11434'), 'falls back to localhost');
+  assert.equal((await call('/api/ai/config', { provider: 'none', baseUrl: '', model: '' })).status, 200);
 });
 test('invalid dates and notes are rejected', async () => {
   assert.equal((await call('/api/session', { day: 'nope' })).status, 400);

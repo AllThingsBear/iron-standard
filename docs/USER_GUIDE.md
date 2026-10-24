@@ -63,7 +63,7 @@ You never need AI. You can always copy a report to any assistant and paste the r
 
 Then confirm a workout and click **Ask AI trainer**. You are asked to confirm each time, because the report (goals, limitations, workouts, notes, metrics) is sent to that provider. The reply is saved as an **AI-generated**, append-only note. It may also **propose** weight picks: they appear in a panel and only take effect if you click **Apply picks**. Your logged history, goals and program are never changed by the AI. Use **Test connection** to check a provider with a harmless message that contains none of your data.
 
-For a local model with Ollama, raise Ollama's context window first (see Troubleshooting), otherwise long reports are truncated.
+Step-by-step instructions for every option, including a free private local model with Ollama, are in the **[AI trainer setup guide](AI_SETUP.md)**.
 
 Your API key is kept only on this computer (`data/ai.json`), is never shown again, and is never included in exports or backups.
 

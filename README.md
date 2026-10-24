@@ -69,6 +69,7 @@ Open http://localhost:4871. The container is published on `127.0.0.1` only (chan
 ## Documentation
 
 - [User guide](docs/USER_GUIDE.md): daily use, logging, trainer reports
+- [AI trainer setup](docs/AI_SETUP.md): paste, Claude CLI, API key, or a free private local model with Ollama
 - [Troubleshooting](docs/TROUBLESHOOTING.md)
 - [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) · [Changelog](CHANGELOG.md)
 
