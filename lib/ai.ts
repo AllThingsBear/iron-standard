@@ -86,9 +86,11 @@ export async function callAi(system:string,user:string,maxTokens=3000):Promise<{
   }
   const model=s.model||'gpt-4o-mini';
   const base=(s.baseUrl||'https://api.openai.com/v1').replace(/\/+$/,'');
-  const j=await postJson(`${base}/chat/completions`,key?{Authorization:`Bearer ${key}`}:{},{model,max_tokens:maxTokens,messages:[{role:'system',content:system},{role:'user',content:user}]});
+  // Reasoning models (Gemma 4, Qwen3, gpt-oss...) spend tokens thinking BEFORE the answer, so leave plenty of headroom.
+  const budget=maxTokens<100?600:Math.max(maxTokens,8000);
+  const j=await postJson(`${base}/chat/completions`,key?{Authorization:`Bearer ${key}`}:{},{model,max_tokens:budget,messages:[{role:'system',content:system},{role:'user',content:user}]});
   const text=String(j?.choices?.[0]?.message?.content||'').trim();
-  if(!text)throw new Error('The AI service returned an empty reply.');
+  if(!text)throw new Error(j?.choices?.[0]?.finish_reason==='length'?'The model ran out of tokens while thinking, before it could answer. Try a smaller report, a larger context window, or a non-reasoning model.':'The AI service returned an empty reply.');
   return {text,label:model};
 }
 

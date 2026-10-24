@@ -9,6 +9,7 @@ All notable changes are documented here. The format follows [Keep a Changelog](h
 - Built-in exercise library (30 generic exercises) filtered by the equipment in your profile
 - Server-side program validation (id uniqueness, length and range limits); rejected saves change nothing
 - Optional AI trainer (PROFILE → AI trainer): Claude CLI, Anthropic API or any OpenAI-compatible service (including local Ollama). One-click "Ask AI trainer" with a confirmation each time; replies saved as AI-labelled notes; proposed weight picks need your approval. Keys are write-only and excluded from exports/backups
+- Works with reasoning models (e.g. Gemma 4 via Ollama): larger token budget, clear error if the model runs out of tokens while thinking, and docs for Ollama's context window. Tested with gemma4:12b on a 16 GB GPU
 - Request guard on every API route (loopback Host only; same-origin JSON for writes) to block CSRF and DNS rebinding
 - Security hardening: PostCSS override (npm audit clean), least-privilege CI, Dependabot
 - Click any exercise illustration to enlarge it (Esc or click outside to close); figures are now auto-fitted to their frame so nothing is cut off; fixed the glute bridge and floor press leg poses

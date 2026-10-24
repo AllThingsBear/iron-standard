@@ -38,8 +38,8 @@ const mock = http.createServer((req, res) => {
   let b = ''; req.on('data', d => b += d); req.on('end', () => {
     const body = b ? JSON.parse(b) : {}; seen.push({ url: req.url, headers: req.headers, body });
     res.setHeader('Content-Type', 'application/json');
-    if (req.url === '/v1/chat/completions') return res.end(JSON.stringify({ choices: [{ message: { content: body.max_tokens === 20 ? 'OK' : '<think>hidden reasoning</think>' + String.fromCharCode(10) + REPLY } }] }));
-    if (req.url === '/v1/messages') return res.end(JSON.stringify({ content: [{ type: 'text', text: body.max_tokens === 20 ? 'OK' : REPLY }] }));
+    if (req.url === '/v1/chat/completions') return res.end(JSON.stringify({ choices: [{ message: { content: JSON.stringify(body).includes('connectivity test') ? 'OK' : '<think>hidden reasoning</think>' + String.fromCharCode(10) + REPLY } }] }));
+    if (req.url === '/v1/messages') return res.end(JSON.stringify({ content: [{ type: 'text', text: JSON.stringify(body).includes('connectivity test') ? 'OK' : REPLY }] }));
     res.statusCode = 404; res.end('{}');
   });
 }).listen(MOCK_PORT, '127.0.0.1');
