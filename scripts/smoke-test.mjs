@@ -4,6 +4,7 @@ import { spawn } from 'node:child_process';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import http from 'node:http';
 import assert from 'node:assert/strict';
 
 const PORT = 4899;
@@ -25,6 +26,27 @@ async function waitUp() {
   for (let i = 0; i < 60; i++) { try { if ((await fetch(BASE + '/api/state')).ok) return; } catch {} await new Promise(r => setTimeout(r, 500)); }
   throw new Error('server did not start');
 }
+
+// Mock AI provider (OpenAI-compatible + Anthropic shapes) so the integration is tested without a real service.
+const MOCK_PORT = 4898;
+const seen = [];
+const FENCE = '`'.repeat(3);
+const REPLY = ['VERDICT', 'Solid session.', '', 'NEXT SESSION', '- Push-ups: slow the lowering.', '', FENCE + 'picks',
+  '[{"exercise_id":"pushupA","weight":null,"reps":"2 x 12","note":"slow tempo"},{"exercise_id":"not-real","weight":50,"reps":"3 x 8","note":"x"},{"exercise_id":"pushupA","weight":9999,"reps":"","note":"too heavy"}]',
+  FENCE].join('\n');
+const mock = http.createServer((req, res) => {
+  let b = ''; req.on('data', d => b += d); req.on('end', () => {
+    const body = b ? JSON.parse(b) : {}; seen.push({ url: req.url, headers: req.headers, body });
+    res.setHeader('Content-Type', 'application/json');
+    if (req.url === '/v1/chat/completions') return res.end(JSON.stringify({ choices: [{ message: { content: body.max_tokens === 20 ? 'OK' : REPLY } }] }));
+    if (req.url === '/v1/messages') return res.end(JSON.stringify({ content: [{ type: 'text', text: body.max_tokens === 20 ? 'OK' : REPLY }] }));
+    res.statusCode = 404; res.end('{}');
+  });
+}).listen(MOCK_PORT, '127.0.0.1');
+const raw = (path, { method = 'POST', headers = {}, body = '{}' } = {}) => new Promise((resolve, reject) => {
+  const r = http.request({ host: '127.0.0.1', port: PORT, path, method, headers: { 'Content-Type': 'application/json', ...headers } }, res => { let d = ''; res.on('data', c => d += c); res.on('end', () => resolve({ status: res.statusCode, text: d })); });
+  r.on('error', reject); r.end(method === 'GET' ? undefined : body);
+});
 
 const tests = [];
 const test = (name, fn) => tests.push([name, fn]);
@@ -136,6 +158,45 @@ test('backup names cannot escape the backups folder', async () => {
   assert.equal((await fetch(BASE + '/api/backup/..%2F..%2Fetc%2Fpasswd')).status, 400);
   assert.equal((await fetch(BASE + '/api/backup/iron-standard-nope.db')).status, 404);
 });
+test('request guard blocks other hosts, cross-site and non-JSON writes', async () => {
+  assert.equal((await raw('/api/state', { method: 'GET', headers: { Host: 'evil.example.com' } })).status, 403, 'DNS rebinding host');
+  assert.equal((await raw('/api/session', { headers: { Origin: 'https://evil.example.com' }, body: '{"day":"2026-01-05"}' })).status, 403, 'cross-origin');
+  assert.equal((await raw('/api/session', { headers: { 'Sec-Fetch-Site': 'cross-site' }, body: '{"day":"2026-01-05"}' })).status, 403, 'cross-site');
+  assert.equal((await raw('/api/session', { headers: { 'Content-Type': 'text/plain' }, body: '{"day":"2026-01-05"}' })).status, 415, 'simple-request CSRF');
+  assert.equal((await raw('/api/state', { method: 'GET' })).status, 200, 'normal local requests still work');
+});
+test('AI trainer: key is write-only, reply saved as an AI-labelled note, picks are proposals only', async () => {
+  assert.equal((await state()).notes.filter(n => /AI trainer/.test(n.author)).length, 0);
+  assert.equal((await call('/api/ai/ask', { day: '2026-01-05' })).status, 502, 'not configured -> clear error');
+  assert.equal((await call('/api/ai/config', { provider: 'openai', baseUrl: 'ftp://nope' })).status, 400);
+  assert.equal((await call('/api/ai/config', { provider: 'openai', baseUrl: `http://127.0.0.1:${MOCK_PORT}/v1`, model: 'test-model', apiKey: 'sk-test-SECRET-123' })).status, 200);
+  const cfgText = await (await fetch(BASE + '/api/ai/config')).text();
+  assert.ok(!cfgText.includes('SECRET'), 'API key must never be returned');
+  assert.match(cfgText, /"hasKey":true/);
+  assert.equal((await call('/api/ai/test', {})).status, 200);
+  const before = await state();
+  const r = await call('/api/ai/ask', { day: '2026-01-05' });
+  assert.equal(r.status, 200);
+  assert.equal(r.json.proposals.length, 1, 'invalid ids and absurd weights are dropped');
+  assert.equal(r.json.proposals[0].exercise_id, 'pushupA');
+  const sent = seen.filter(s => s.url === '/v1/chat/completions').pop();
+  assert.match(sent.body.messages[1].content, /TRAINER EVALUATION REQUEST/, 'the report is what gets sent');
+  assert.equal(sent.headers.authorization, 'Bearer sk-test-SECRET-123');
+  const after = await state();
+  const note = after.notes.find(n => /AI trainer/.test(n.author));
+  assert.ok(note && note.author.includes('test-model') && !note.body.includes('```picks'), 'saved as an AI-labelled note without the machine block');
+  assert.equal(after.sets.length, before.sets.length, 'history untouched');
+  assert.deepEqual(after.profile, before.profile, 'goals/profile untouched');
+  assert.deepEqual(after.recommendations, before.recommendations, 'picks are NOT applied automatically');
+  // Anthropic shape
+  assert.equal((await call('/api/ai/config', { provider: 'anthropic', baseUrl: `http://127.0.0.1:${MOCK_PORT}`, model: 'claude-test' })).status, 200);
+  assert.equal((await call('/api/ai/ask', { day: '2026-01-05' })).status, 200);
+  assert.equal(seen.filter(s => s.url === '/v1/messages').pop().headers['x-api-key'], 'sk-test-SECRET-123');
+  // The key must not leak through exports
+  assert.ok(!(await (await fetch(BASE + '/api/export')).text()).includes('SECRET'), 'export must not contain the key');
+  assert.equal((await call('/api/ai/config', { provider: 'none', clearKey: true })).status, 200);
+  assert.match(await (await fetch(BASE + '/api/ai/config')).text(), /"hasKey":false/);
+});
 test('invalid dates and notes are rejected', async () => {
   assert.equal((await call('/api/session', { day: 'nope' })).status, 400);
   assert.equal((await call('/api/trainer-note', { day: '2026-01-05', body: '   ' })).status, 400);
@@ -149,5 +210,6 @@ try {
   }
 } catch (e) { failed++; console.error(e.message); }
 stop();
+mock.close();
 console.log(failed ? `\n${failed} failed` : '\nall passed');
 process.exit(failed ? 1 : 0);

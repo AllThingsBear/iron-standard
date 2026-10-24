@@ -19,7 +19,7 @@ export default function DataPanel({onChanged,notify}:{onChanged:()=>Promise<void
  const refresh=async()=>{try{const r=await fetch('/api/backup',{cache:'no-store'});if(!r.ok)throw new Error();const j=await r.json();setInfo(j.info);setBackups(j.backups)}catch{setErr('Could not read data information.')}};
  useEffect(()=>{refresh()},[]);
 
- async function backupNow(){setBusy(true);try{const r=await fetch('/api/backup',{method:'POST'});if(!r.ok)throw new Error();notify('BACKUP CREATED');await refresh()}catch{notify('SAVE FAILED — BACKUP NOT CREATED')}finally{setBusy(false)}}
+ async function backupNow(){setBusy(true);try{const r=await fetch('/api/backup',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});if(!r.ok)throw new Error();notify('BACKUP CREATED');await refresh()}catch{notify('SAVE FAILED — BACKUP NOT CREATED')}finally{setBusy(false)}}
  async function restore(name:string){
   if(!window.confirm(`Restore "${name}"?\n\nThis REPLACES all current data with the contents of that backup. A safety backup of your current data is taken first.`))return;
   setBusy(true);

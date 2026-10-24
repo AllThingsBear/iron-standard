@@ -8,6 +8,9 @@ All notable changes are documented here. The format follows [Keep a Changelog](h
 - Program editor (new PROGRAM tab): weekly schedule, sessions, exercises, reordering, duplicate/delete, reset to starter
 - Built-in exercise library (30 generic exercises) filtered by the equipment in your profile
 - Server-side program validation (id uniqueness, length and range limits); rejected saves change nothing
+- Optional AI trainer (PROFILE → AI trainer): Claude CLI, Anthropic API or any OpenAI-compatible service (including local Ollama). One-click "Ask AI trainer" with a confirmation each time; replies saved as AI-labelled notes; proposed weight picks need your approval. Keys are write-only and excluded from exports/backups
+- Request guard on every API route (loopback Host only; same-origin JSON for writes) to block CSRF and DNS rebinding
+- Security hardening: PostCSS override (npm audit clean), least-privilege CI, Dependabot
 - Click any exercise illustration to enlarge it (Esc or click outside to close); figures are now auto-fitted to their frame so nothing is cut off; fixed the glute bridge and floor press leg poses
 - Every exercise shows what it works and why it helps (muscle chips and a plain-English benefit), filled in automatically from the exercise name and editable in the program editor; also included in trainer reports
 - Recommended weights on every exercise: conservative automatic progression from your history (never progresses on unrecorded or reported pain) plus trainer picks that override it until a newer session is logged

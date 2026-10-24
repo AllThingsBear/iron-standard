@@ -54,6 +54,17 @@ After you confirm a workout, **Send to trainer** builds a self-contained Markdow
 - Paste the reply into **Trainer's Notes → Add feedback**. Feedback is labelled **AI-GENERATED**, is append-only, and never changes your workout history, goals or program.
 - Previous feedback is included in later reports so the trainer can see its own earlier advice.
 
+## AI trainer (optional)
+
+You never need AI. You can always copy a report to any assistant and paste the reply into Trainer's Notes. If you want one-click replies, set up a provider in **PROFILE → AI trainer**:
+
+- **Claude CLI:** uses the Claude Code command-line tool already installed and signed in on your computer. No API key.
+- **Anthropic API** or **OpenAI-compatible** (OpenAI, OpenRouter, or a local server such as Ollama or LM Studio): enter a model and a key (local servers need none). The provider bills you directly under its own terms; IRON STANDARD has no AI service or credits of its own.
+
+Then confirm a workout and click **Ask AI trainer**. You are asked to confirm each time, because the report (goals, limitations, workouts, notes, metrics) is sent to that provider. The reply is saved as an **AI-generated**, append-only note. It may also **propose** weight picks: they appear in a panel and only take effect if you click **Apply picks**. Your logged history, goals and program are never changed by the AI. Use **Test connection** to check a provider with a harmless message that contains none of your data.
+
+Your API key is kept only on this computer (`data/ai.json`), is never shown again, and is never included in exports or backups.
+
 ## Backing up, exporting and moving your data
 
 The **DATA** tab shows exactly where your files are and has everything you need:

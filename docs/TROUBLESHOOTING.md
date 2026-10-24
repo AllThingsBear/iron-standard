@@ -21,4 +21,12 @@ Run `npm install` again, then `npm run build` and `npm start`. If you are using 
 **I cannot open the app from my phone or another computer**
 By design it listens on `127.0.0.1` only and has no login. Do not expose it to a network without adding authentication and TLS in front of it.
 
+**`403 Host not allowed` when using a reverse proxy or another hostname**
+The app only answers requests addressed to `localhost`, `127.0.0.1` or `[::1]`. If you serve it behind a proxy under another name, set `ALLOWED_HOSTS=my.host.name` and put authentication in front of it (the app itself has no login).
+
+**"Ask AI trainer" fails**
+- *Claude CLI:* run `claude` once in a terminal to sign in, make sure it is on your PATH, then use **Test connection** in PROFILE → AI trainer.
+- *API providers:* check the key, model name and base URL. For Ollama use `http://localhost:11434/v1` and a model you have pulled.
+- The error message from the provider is shown in the red banner. Nothing is saved if the request fails.
+
 **Still stuck?** Open an issue on GitHub with your OS, Node version (`node -v`) and the error text. Do not paste your database or reports; they contain personal data.

@@ -1,9 +1,10 @@
 'use client';
 import {useEffect,useMemo,useState} from 'react';
-import {Activity,CalendarDays,Check,ChevronLeft,ChevronRight,ClipboardList,Crosshair,Dumbbell,Flag,HeartPulse,NotebookPen,Save,Send,Copy,Plus,ShieldAlert,Database,ZoomIn,Target,TrendingDown,UserCog,X} from 'lucide-react';
+import {Activity,CalendarDays,Check,ChevronLeft,ChevronRight,ClipboardList,Crosshair,Dumbbell,Flag,HeartPulse,NotebookPen,Save,Send,Copy,Plus,ShieldAlert,Database,ZoomIn,Zap,Target,TrendingDown,UserCog,X} from 'lucide-react';
 import {Exercise,Program} from '../lib/program';
 import ProgramEditor from './ProgramEditor';
 import DataPanel from './DataPanel';
+import AiSettings,{AiState} from './AiSettings';
 import {figureFor} from '../lib/figures';
 import {infoFor} from '../lib/exerciseInfo';
 import {recommend,TrainerRec,Rec} from '../lib/progression';
@@ -94,6 +95,9 @@ export default function Page(){
  const [profile,setProfile]=useState<Profile>(defaultProfile);
  const [prog,setProg]=useState<Program|null>(null);
  const [zoom,setZoom]=useState<{src:string;name:string}|null>(null);
+ const [ai,setAi]=useState<AiState|null>(null);
+ const [askingAi,setAskingAi]=useState(false);
+ const [proposals,setProposals]=useState<{exercise_id:string;name:string;weight:number|null;reps:string;note:string}[]>([]);
  const [sets,setSets]=useState<SetEntry[]>([]);
  const [recs,setRecs]=useState<TrainerRec[]>([]);
  const [sessions,setSessions]=useState<Sess[]>([]);
@@ -126,7 +130,9 @@ export default function Page(){
  useEffect(()=>{setSessNote(sessions.find(x=>x.day===date)?.general_note??'')},[date,sessions]);
  const existingDay=days.find(d=>d.day===date);
  useEffect(()=>{const d=days.find(row=>row.day===date);setDaily({calories:String(d?.calories??''),protein:String(d?.protein??''),walk_minutes:String(d?.walk_minutes??''),weight:String(d?.weight??''),waist:String(d?.waist??''),notes:d?.notes??''});setDraft({});setSetsDraft({});setExpanded({});},[date,days]);
- useEffect(()=>{setReport(null)},[date]);
+ useEffect(()=>{setReport(null);setProposals([])},[date]);
+ const refreshAi=()=>fetch('/api/ai/config',{cache:'no-store'}).then(r=>r.json()).then(setAi).catch(()=>{});
+ useEffect(()=>{refreshAi()},[]);
 
  const completed=plan?.exercises.filter(e=>{const val=draft[e.id]?.done;return val??Boolean(logs.find(x=>x.exercise_id===e.id)?.done)}).length??0;
  const total=plan?.exercises.length??0;
@@ -170,6 +176,20 @@ export default function Page(){
  async function deleteNote(id:number){
   if(!window.confirm('Delete this trainer note? Your workout data is not affected.'))return;
   try{const r=await fetch('/api/trainer-note',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});if(!r.ok)throw new Error();await load();setMessage('NOTE DELETED')}catch{setMessage('SAVE FAILED — TRY AGAIN')}
+ }
+ async function askAi(){
+  if(!ai||ai.provider==='none')return;
+  let dest='your local Claude CLI (which sends it to Anthropic)';
+  if(ai.provider==='anthropic')dest=ai.baseUrl||'api.anthropic.com';
+  if(ai.provider==='openai')dest=ai.baseUrl||'api.openai.com';
+  if(!window.confirm(`Send this workout report to ${dest}?
+
+It contains your goals, limitations, workouts, set notes and recent metrics. The reply is saved as an AI-generated note. Nothing else in your data is changed.`))return;
+  try{setAskingAi(true);setMessage('ASKING THE AI TRAINER… THIS CAN TAKE A MINUTE');const r=await fetch('/api/ai/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({day:date})});const j=await r.json();if(!r.ok)throw new Error(j.error);await load();setProposals(j.proposals||[]);setMessage('AI TRAINER NOTE SAVED')}
+  catch(e){setMessage('SAVE FAILED — '+(e instanceof Error?e.message:'AI REQUEST FAILED').slice(0,160).toUpperCase())}finally{setAskingAi(false)}
+ }
+ async function applyProposals(){
+  try{for(const p of proposals){const r=await fetch('/api/recommendation',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({exercise_id:p.exercise_id,weight:p.weight,reps:p.reps,note:p.note,author:'AI trainer (applied by you)'})});if(!r.ok)throw new Error()}await load();setProposals([]);setMessage('WEIGHT PICKS APPLIED')}catch{setMessage('SAVE FAILED — TRY AGAIN')}
  }
  async function copyReport(){if(!report)return;try{await navigator.clipboard.writeText(report.text);setMessage('REPORT COPIED')}catch{setMessage('COPY BLOCKED — SELECT TEXT MANUALLY')}}
  function effective(e:Exercise):DraftRow{const old=logs.find(x=>x.exercise_id===e.id);return draft[e.id]??{done:!!old?.done,weight:String(old?.weight??''),reps:old?.reps??'',notes:old?.notes??''}}
@@ -352,6 +372,8 @@ export default function Page(){
        <div className="session-actions">
         <button className="save" disabled={saving} onClick={()=>saveSession(true)}><Check size={14}/> {confirmed?'RE-CONFIRM WORKOUT':'CONFIRM WORKOUT'}</button>
         {confirmed&&<button className="save send" disabled={saving} onClick={sendToTrainer}><Send size={14}/> SEND TO TRAINER</button>}
+        {confirmed&&ai&&ai.provider!=='none'&&<button className="save ask" disabled={saving||askingAi} onClick={askAi}><Zap size={14}/> {askingAi?'ASKING…':'ASK AI TRAINER'}</button>}
+        {confirmed&&ai&&ai.provider==='none'&&<button className="ghost" onClick={()=>setTab('profile')}>SET UP AI TRAINER</button>}
         {confirmed&&<button className="ghost" disabled={saving} onClick={()=>saveSession(false)}>UNCONFIRM</button>}
        </div>
        {session_?.sent_at&&<p className="sent-note">LAST REPORT BUILT {new Date(session_.sent_at).toLocaleString()}</p>}
@@ -371,6 +393,7 @@ export default function Page(){
         <header><span className="ai-tag">AI-GENERATED</span><b>{n.author}</b><time>{new Date(n.created_at.includes('T')?n.created_at:n.created_at.replace(' ','T')+'Z').toLocaleString()}</time><button className="note-del" onClick={()=>deleteNote(n.id)} aria-label="Delete note"><X size={13}/></button></header>
         <div className="tnote-body">{n.body}</div>
        </article>)}
+       {proposals.length>0&&<div className="proposals"><b>PROPOSED WEIGHT PICKS</b><p className="note-sm">Suggested by the AI trainer. Nothing changes until you apply them, and your logged history and goals are never touched.</p><ul>{proposals.map(p=><li key={p.exercise_id}><span>{p.name}</span><b>{p.weight!=null?`${p.weight} ${wu}`:'bodyweight'}</b><em>{p.reps}</em><small>{p.note}</small></li>)}</ul><div className="session-actions"><button className="save" onClick={applyProposals}><Check size={14}/> APPLY PICKS</button><button className="ghost" onClick={()=>setProposals([])}>DISMISS</button></div></div>}
        <p className="disclaimer">AI feedback is a suggestion, not medical advice. It never changes your workout history, goals or program unless you change them yourself.</p>
        <label className="full">ADD FEEDBACK<textarea rows={4} placeholder="Paste your trainer's reply here…" value={noteText} onChange={e=>setNoteText(e.target.value)}/></label>
        <div className="session-actions">
@@ -436,6 +459,7 @@ export default function Page(){
     <h2>YOUR STANDARD</h2>
     <p className="plan-intro">Goals, targets, equipment and limitations. Stored only in your local database and used to build your trainer report.</p>
     <ProfileForm key={JSON.stringify(profile)} initial={profile} onboarding={false} onSave={saveProfile}/>
+    <AiSettings notify={setMessage} onChanged={refreshAi}/>
    </section>:<section className="panel history">
     <Corners/>
     <div className="panel-top"><span className="section-mark">FIELD REPORTS <span className="sep">//</span> SAVED DATA</span><span className="counter">{streak} ACTIVE TRAINING DATES</span></div>
