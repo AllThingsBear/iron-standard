@@ -19,6 +19,7 @@ No accounts. No cloud. No telemetry. Your workouts, measurements and notes live 
 - Weekly workout schedule with a daily checklist and exercise instructions
 - Per-set logging: weight, reps, 0–10 pain score and a note for every set
 - Daily metrics: weight, waist, calories, protein, walking minutes, notes
+- Every exercise explains what it works and why it helps
 - Suggested weight for every exercise, based on your history and pain scores (conservative: never progresses on unrecorded or reported pain), with optional trainer picks
 - Exercise illustrations: original start/finish stick figures with the working muscles highlighted (24 common movements; free to use, drawn for this project)
 - Your data, your files: full JSON export, spreadsheet (CSV) export of your sets, import (merge or replace) with automatic safety backups, one-click SQLite backups with download and restore, and an in-app view of exactly where your files live

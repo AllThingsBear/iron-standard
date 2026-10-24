@@ -69,7 +69,7 @@ test('program editor saves, validates, preserves ids, and reports removed exerci
   const day7 = (a, b) => ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'].map((d, i) => ({ day: d, session: i % 2 ? b : a }));
   const prog = {
     sessions: {
-      chestA: { id: 'chestA', title: 'Chest', subtitle: '', description: '', exercises: [{ id: 'pushupA', name: 'Push-ups', sets: 99, reps: '10', category: 'strength', description: '', equipment: [] }] },
+      chestA: { id: 'chestA', title: 'Chest', subtitle: '', description: '', exercises: [{ id: 'pushupA', name: 'Push-ups', sets: 99, reps: '10', category: 'strength', description: '', equipment: [], works: ['Chest', '  ', 'Triceps'], benefit: '  builds pressing  ' }] },
       rest: { id: 'rest', title: 'Rest', subtitle: '', description: '', exercises: [] }
     },
     week: day7('chestA', 'rest')
@@ -80,6 +80,8 @@ test('program editor saves, validates, preserves ids, and reports removed exerci
   assert.equal(ex.id, 'pushupA', 'mixed-case ids must be preserved');
   assert.equal(ex.sets, 20, 'sets are clamped');
   assert.equal(ex.category, 'STRENGTH');
+  assert.deepEqual(ex.works, ['Chest', 'Triceps']);
+  assert.equal(ex.benefit, 'builds pressing');
   const dup = structuredClone(prog); dup.sessions.rest.exercises = [{ id: 'pushupA', name: 'X', sets: 1, reps: '1', category: 'CORE', description: '' }];
   assert.equal((await call('/api/program', { program: dup })).status, 400, 'duplicate exercise ids rejected');
   assert.equal((await call('/api/program', { program: { sessions: {}, week: [] } })).status, 400);

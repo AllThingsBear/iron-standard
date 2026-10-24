@@ -2,6 +2,7 @@ import {db} from './db';
 import {getProfile,getProgram} from './settings';
 import {buildBrief} from './context';
 import {wUnit,sUnit} from './units';
+import {infoFor} from './exerciseInfo';
 
 type SetRow={exercise_id:string;set_no:number;weight:number|null;reps:number|null;pain:number|null;notes:string|null};
 const v=(x:unknown)=>x==null||x===''?'-':String(x);
@@ -19,7 +20,8 @@ function sessionBlock(day:string,wu:string){
   if(!plan.exercises.length)out+='Rest/recovery day (no strength exercises planned).\n';
   for(const e of plan.exercises){
     const row=ex.find(x=>x.exercise_id===e.id);const mine=sets.filter(s=>s.exercise_id===e.id);
-    out+=`- ${e.name} [plan ${e.sets}x${e.reps}] - ${row?.done?'DONE':'not checked'}\n`;
+    const info=infoFor(e);
+    out+=`- ${e.name} [plan ${e.sets}x${e.reps}] - ${row?.done?'DONE':'not checked'}${info?.works.length?` (works: ${info.works.join(', ')})`:''}\n`;
     if(e.caution)out+=`  (program caution: ${e.caution})\n`;
     for(const s of mine)out+=`  - set ${s.set_no}: ${v(s.weight)} ${wu} x ${v(s.reps)} reps, pain ${v(s.pain)}/10${s.notes?`, note: ${s.notes}`:''}\n`;
     if(!mine.length&&row&&(row.weight!=null||row.reps||row.notes))out+=`  - (legacy log) ${v(row.weight)} ${wu}, reps ${v(row.reps)}${row.notes?`, note: ${row.notes}`:''}\n`;

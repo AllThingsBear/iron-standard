@@ -83,6 +83,8 @@ export default function ProgramEditor({program,equipment,onSave,onReset}:{progra
       <label>SETS<input type="number" min={1} max={20} value={e.sets} onChange={x=>setEx(id,i,'sets',Number(x.target.value))}/></label>
       <label>REPS / TIME<input value={e.reps} maxLength={40} placeholder="8–12, 30 sec, 20 min" onChange={x=>setEx(id,i,'reps',x.target.value)}/></label>
       <label>CATEGORY<select value={CATS.includes(e.category)?e.category:'OTHER'} onChange={x=>setEx(id,i,'category',x.target.value)}>{CATS.map(c=><option key={c}>{c}</option>)}</select></label>
+      <label className="full">WHAT IT WORKS <i className="opt">OPTIONAL · COMMA-SEPARATED · BLANK = AUTO</i><input value={(e.works??[]).join(', ')} maxLength={200} placeholder="Chest, Triceps, Core" onChange={x=>setEx(id,i,'works',x.target.value.split(',').map(s=>s.trimStart()))}/></label>
+      <label className="full">WHY IT HELPS <i className="opt">OPTIONAL · BLANK = AUTO</i><textarea rows={2} maxLength={300} value={e.benefit??''} onChange={x=>setEx(id,i,'benefit',x.target.value)}/></label>
       <label className="full">FORM INSTRUCTIONS<textarea rows={3} maxLength={800} value={e.description} onChange={x=>setEx(id,i,'description',x.target.value)}/></label>
       <label className="full">SAFETY / MODIFICATION NOTE <i className="opt">OPTIONAL</i><textarea rows={2} maxLength={500} value={e.caution??''} onChange={x=>setEx(id,i,'caution',x.target.value)}/></label>
       <fieldset className="full equip"><legend>EQUIPMENT NEEDED</legend>

@@ -50,7 +50,7 @@ export function sanitizeProgram(input:any):Program{
       seen.add(eid);
       const sets=Math.round(Number(e?.sets));
       const caution=txt(e?.caution,500).trim();
-      return {id:eid,name:txt(e?.name,80).trim()||'Unnamed exercise',sets:Number.isFinite(sets)?Math.min(20,Math.max(1,sets)):1,reps:txt(e?.reps,40),category:txt(e?.category,24).toUpperCase()||'STRENGTH',description:txt(e?.description,800),...(caution?{caution}:{}),equipment:Array.isArray(e?.equipment)?e.equipment.map((q:any)=>txt(q,40)).filter(Boolean).slice(0,10):[]};
+      return {id:eid,name:txt(e?.name,80).trim()||'Unnamed exercise',sets:Number.isFinite(sets)?Math.min(20,Math.max(1,sets)):1,reps:txt(e?.reps,40),category:txt(e?.category,24).toUpperCase()||'STRENGTH',description:txt(e?.description,800),...(caution?{caution}:{}),...(Array.isArray(e?.works)&&e.works.length?{works:e.works.map((q:any)=>txt(q,30).trim()).filter(Boolean).slice(0,8)}:{}),...(txt(e?.benefit,300).trim()?{benefit:txt(e?.benefit,300).trim()}:{}),equipment:Array.isArray(e?.equipment)?e.equipment.map((q:any)=>txt(q,40)).filter(Boolean).slice(0,10):[]};
     })};
   }
   const ids=Object.keys(sessions);

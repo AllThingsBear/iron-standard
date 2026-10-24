@@ -491,3 +491,12 @@ footer span{color:var(--tan)}
 .rec-top .ghost{margin-left:auto;padding:7px 10px;border:1px solid var(--edge-hi);background:var(--sunken);color:var(--text-2);font-weight:700}
 .rec-box p{margin:8px 0 0;font-size:12.5px;line-height:1.6;color:var(--text-2)}
 .rec-box small{display:block;margin-top:6px;font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;color:var(--mute)}
+
+/* ===== what it works / why it helps ===== */
+.ex-info{margin:10px 36px 0 70px;display:grid;gap:6px}
+.ex-works{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.ex-lbl{font-family:var(--font-mono);font-size:9px;letter-spacing:.16em;font-weight:700;color:var(--mute);margin-right:4px}
+.work-chip{font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;padding:3px 8px;border:1px solid #c7584a99;background:#c7584a1f;color:#e8b0a6}
+.ex-benefit{margin:0;font-size:12.5px;line-height:1.65;color:var(--text-2)}
+.ex-benefit b{font-family:var(--font-mono);font-size:9px;letter-spacing:.14em;color:var(--mute);margin-right:6px}
+@media (max-width:640px){.ex-info{margin-left:0}}

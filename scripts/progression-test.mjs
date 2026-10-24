@@ -1,5 +1,8 @@
 // Unit tests for the weight-suggestion rules. Run: npm run test:unit  (needs Node 22.6+ for --experimental-strip-types)
 import { recommend } from '../lib/progression.ts';
+import { infoFor } from '../lib/exerciseInfo.ts';
+import { library } from '../lib/library.ts';
+import { starterProgram } from '../lib/program.ts';
 import assert from 'node:assert/strict';
 const ex = (reps = '8–12', sets = 3) => ({ id: 'x', name: 'X', sets, reps, category: 'STRENGTH', description: '' });
 const S = (day, rows) => rows.map(([weight, reps, pain, notes], i) => ({ day, exercise_id: 'x', set_no: i + 1, weight, reps, pain, notes: notes ?? null }));
@@ -23,4 +26,9 @@ t('only uses sessions BEFORE the viewed date', () => { const h = [...S('2026-10-
 const tr = { exercise_id: 'x', weight: 35, reps: '3 × 8–12', note: 'trainer says', author: 'Coach', created_at: '2026-10-23 03:00:00' };
 t('current trainer pick wins over auto', () => { const r = R(ex(), S('2026-10-19', [[50, 12, 0], [50, 12, 0], [50, 12, 0]]), tr); assert.equal(r.kind, 'trainer'); assert.equal(r.weight, 35); });
 t('trainer pick expires once a newer session is logged', () => { const r = R(ex(), S('2026-10-25', [[35, 12, 0], [35, 12, 0], [35, 12, 0]]), tr, 'imperial', '2026-10-26'); assert.equal(r.kind, 'progress'); assert.equal(r.weight, 40); });
+t('bird dog explains its core benefit', () => { const i = infoFor({ name: 'Bird dogs' }); assert.ok(i.works.includes('Deep core')); assert.match(i.benefit, /trunk/); });
+t('specific names win (bottom-half push-up, squeeze press)', () => { assert.match(infoFor({ name: 'Bottom-half push-ups' }).benefit, /bottom/); assert.match(infoFor({ name: 'Dumbbell squeeze floor press' }).benefit, /together/); });
+t('own works/benefit override the automatic text', () => { const i = infoFor({ name: 'Bird dogs', works: ['Glutes'], benefit: 'Mine.' }); assert.deepEqual(i.works, ['Glutes']); assert.equal(i.benefit, 'Mine.'); });
+t('unknown custom exercise has no auto info', () => assert.equal(infoFor({ name: 'Zottman thing' }), null));
+t('every library and starter exercise has info', () => { const all = [...library, ...Object.values(starterProgram.sessions).flatMap(s => s.exercises)]; const missing = all.filter(e => !infoFor(e)).map(e => e.name); assert.deepEqual(missing, []); });
 console.log(process.exitCode ? 'FAILURES' : 'all passed');

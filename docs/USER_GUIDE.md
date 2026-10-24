@@ -15,7 +15,7 @@ You can change all of this later on the **PROFILE** tab.
 
 The **Daily Mission** tab shows the session scheduled for the selected date. Use the arrows, the date picker or the week strip to move around.
 
-1. Read the exercise description and any caution note.
+1. Read the exercise description and any caution note. Each exercise also shows **what it works** (muscle chips) and **why it helps**, in plain English.
 2. Tick the checkbox when an exercise is done, **or** click **LOG SET** and record each set.
 3. Each exercise shows a **suggested weight** (see Suggested weights below). For each set enter weight, reps, a **pain score (0–10, defaults to 0)** and optional **notes** (how it felt, form, pain location, tingling, anything you want to remember). Saving sets also marks the exercise complete.
 4. Add daily metrics (weight, waist, calories, protein, walking) in **Daily Intel**.
@@ -37,7 +37,7 @@ Open the **PROGRAM** tab to build your own week.
 
 - **Weekly schedule:** pick which session runs on each weekday (use a rest/open session for off days).
 - **Sessions:** create, duplicate or delete sessions and edit their title, subtitle and description.
-- **Exercises:** edit name, sets, reps or time, category, form instructions, an optional safety note and the equipment needed. Reorder with the arrows. Add a blank exercise or pick one from the built-in library (tick "only my equipment" to hide things you cannot do).
+- **Exercises:** edit name, sets, reps or time, category, form instructions, an optional safety note, the equipment needed, and (optionally) what it works and why it helps. Leave those two blank and the app fills them in from the exercise name. Reorder with the arrows. Add a blank exercise or pick one from the built-in library (tick "only my equipment" to hide things you cannot do).
 - **Save:** changes only apply when you press **Save program**. **Discard** throws away unsaved edits. **Reset to starter** replaces everything with the neutral starter program (it asks first).
 
 Good to know: logged sets and notes are never deleted by editing. If you remove an exercise, its old logs stay in your database and still appear in trainer reports (marked "not in the current program"). Days show the session currently scheduled for that weekday, so changing the schedule changes how past dates are displayed.

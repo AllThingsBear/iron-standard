@@ -5,6 +5,7 @@ import {Exercise,Program} from '../lib/program';
 import ProgramEditor from './ProgramEditor';
 import DataPanel from './DataPanel';
 import {figureFor} from '../lib/figures';
+import {infoFor} from '../lib/exerciseInfo';
 import {recommend,TrainerRec,Rec} from '../lib/progression';
 import {Profile,defaultProfile,EQUIPMENT,wUnit,sUnit} from '../lib/units';
 
@@ -313,6 +314,10 @@ export default function Page(){
         </div>
         {figureFor(e.name)&&<img className="exercise-fig" src={figureFor(e.name)!} alt={`${e.name}: start and finish positions`} loading="lazy" width="360" height="215"/>}
         <p className="exercise-desc">{e.description}</p>
+        {(()=>{const info=infoFor(e);return info&&(info.works.length>0||info.benefit)?<div className="ex-info">
+         {info.works.length>0&&<div className="ex-works"><span className="ex-lbl">WORKS</span>{info.works.map(w=><span className="work-chip" key={w}>{w}</span>)}</div>}
+         {info.benefit&&<p className="ex-benefit"><b>WHY IT HELPS</b> {info.benefit}</p>}
+        </div>:null})()}
         {e.caution&&<p className="caution"><ShieldAlert size={15}/><span><b>CAUTION</b> {e.caution}</span></p>}
         {open&&<div className="exercise-details sets-editor" id={`details-${e.id}`}>
          {(()=>{const rec=recFor(e);return <div className={'rec-box rec-'+rec.kind}>
