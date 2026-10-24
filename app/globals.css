@@ -500,3 +500,17 @@ footer span{color:var(--tan)}
 .ex-benefit{margin:0;font-size:12.5px;line-height:1.65;color:var(--text-2)}
 .ex-benefit b{font-family:var(--font-mono);font-size:9px;letter-spacing:.14em;color:var(--mute);margin-right:6px}
 @media (max-width:640px){.ex-info{margin-left:0}}
+
+/* ===== figure lightbox ===== */
+.fig-btn{display:block;position:relative;margin:12px 0 0 70px;padding:0;background:transparent;border:0;cursor:zoom-in;width:240px;max-width:calc(100% - 72px)}
+.fig-btn .exercise-fig{margin:0;width:100%;max-width:100%;transition:border-color var(--dur)}
+.fig-btn:hover .exercise-fig,.fig-btn:focus-visible .exercise-fig{border-color:var(--tan)}
+.fig-zoom{position:absolute;right:6px;bottom:6px;display:inline-flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:9px;letter-spacing:.12em;font-weight:700;color:var(--tan-2);background:#0a0c0acc;padding:3px 7px;border:1px solid var(--edge-hi);opacity:.85}
+.lightbox{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(5,6,5,.88);backdrop-filter:blur(3px);animation:fadein .15s ease-out}
+.lightbox-card{width:min(96vw,980px);max-height:94vh;overflow:auto;background:var(--panel);border:1px solid var(--edge-hi);padding:14px 16px 12px}
+.lightbox-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;font-family:var(--font-display);font-size:22px;letter-spacing:.03em}
+.lightbox-card img{display:block;width:100%;height:auto;background:var(--sunken);border:1px solid var(--edge)}
+.lightbox-card p{margin:10px 0 0;font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;color:var(--mute)}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.lightbox{animation:none}}
+@media (max-width:640px){.fig-btn{margin-left:0;width:100%;max-width:100%}}

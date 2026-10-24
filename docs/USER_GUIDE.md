@@ -15,7 +15,7 @@ You can change all of this later on the **PROFILE** tab.
 
 The **Daily Mission** tab shows the session scheduled for the selected date. Use the arrows, the date picker or the week strip to move around.
 
-1. Read the exercise description and any caution note. Each exercise also shows **what it works** (muscle chips) and **why it helps**, in plain English.
+1. Read the exercise description and any caution note. Click the small illustration to enlarge it. Each exercise also shows **what it works** (muscle chips) and **why it helps**, in plain English.
 2. Tick the checkbox when an exercise is done, **or** click **LOG SET** and record each set.
 3. Each exercise shows a **suggested weight** (see Suggested weights below). For each set enter weight, reps, a **pain score (0–10, defaults to 0)** and optional **notes** (how it felt, form, pain location, tingling, anything you want to remember). Saving sets also marks the exercise complete.
 4. Add daily metrics (weight, waist, calories, protein, walking) in **Daily Intel**.

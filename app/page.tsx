@@ -1,6 +1,6 @@
 'use client';
 import {useEffect,useMemo,useState} from 'react';
-import {Activity,CalendarDays,Check,ChevronLeft,ChevronRight,ClipboardList,Crosshair,Dumbbell,Flag,HeartPulse,NotebookPen,Save,Send,Copy,Plus,ShieldAlert,Database,Target,TrendingDown,UserCog,X} from 'lucide-react';
+import {Activity,CalendarDays,Check,ChevronLeft,ChevronRight,ClipboardList,Crosshair,Dumbbell,Flag,HeartPulse,NotebookPen,Save,Send,Copy,Plus,ShieldAlert,Database,ZoomIn,Target,TrendingDown,UserCog,X} from 'lucide-react';
 import {Exercise,Program} from '../lib/program';
 import ProgramEditor from './ProgramEditor';
 import DataPanel from './DataPanel';
@@ -93,6 +93,7 @@ export default function Page(){
  const [days,setDays]=useState<Daily[]>([]);
  const [profile,setProfile]=useState<Profile>(defaultProfile);
  const [prog,setProg]=useState<Program|null>(null);
+ const [zoom,setZoom]=useState<{src:string;name:string}|null>(null);
  const [sets,setSets]=useState<SetEntry[]>([]);
  const [recs,setRecs]=useState<TrainerRec[]>([]);
  const [sessions,setSessions]=useState<Sess[]>([]);
@@ -112,6 +113,7 @@ export default function Page(){
 
  const load=async()=>{const r=await fetch('/api/state',{cache:'no-store'});if(!r.ok)throw new Error('Load failed');const data=await r.json();setEntries(data.exercises);setDays(data.days);setSets(data.sets||[]);setSessions(data.sessions||[]);setNotes(data.notes||[]);setRecs(data.recommendations||[]);setProfile(data.profile);setProg(data.program);};
  useEffect(()=>{const q=new URLSearchParams(window.location.search).get('date');setDate(q&&/^\d{4}-\d{2}-\d{2}$/.test(q)?q:todayKey());load().catch(()=>setMessage('Database unavailable. Check Docker logs.')).finally(()=>setLoading(false))},[]);
+ useEffect(()=>{if(!zoom)return;const onKey=(ev:KeyboardEvent)=>{if(ev.key==='Escape')setZoom(null)};window.addEventListener('keydown',onKey);return()=>window.removeEventListener('keydown',onKey)},[zoom]);
  useEffect(()=>{if(!message)return;const t=setTimeout(()=>setMessage(''),4000);return()=>clearTimeout(t)},[message]);
 
  const week=prog?.week??[]; const program=prog?.sessions??{};
@@ -312,7 +314,7 @@ export default function Page(){
          </div>
          <button className={'expand '+(open?'is-open':'')} onClick={()=>setExpanded(x=>({...x,[e.id]:!x[e.id]}))} aria-expanded={open} aria-controls={`details-${e.id}`}><NotebookPen size={15}/><span>{open?'CLOSE':'LOG SET'}</span></button>
         </div>
-        {figureFor(e.name)&&<img className="exercise-fig" src={figureFor(e.name)!} alt={`${e.name}: start and finish positions`} loading="lazy" width="360" height="215"/>}
+        {figureFor(e.name)&&<button type="button" className="fig-btn" onClick={()=>setZoom({src:figureFor(e.name)!,name:e.name})} aria-label={`Enlarge illustration: ${e.name}`}><img className="exercise-fig" src={figureFor(e.name)!} alt={`${e.name}: start and finish positions`} loading="lazy"/><span className="fig-zoom" aria-hidden="true"><ZoomIn size={13}/> ENLARGE</span></button>}
         <p className="exercise-desc">{e.description}</p>
         {(()=>{const info=infoFor(e);return info&&(info.works.length>0||info.benefit)?<div className="ex-info">
          {info.works.length>0&&<div className="ex-works"><span className="ex-lbl">WORKS</span>{info.works.map(w=><span className="work-chip" key={w}>{w}</span>)}</div>}
@@ -447,6 +449,14 @@ export default function Page(){
     </table></div>
     {days.length===0&&entries.length===0&&<p className="empty">NO REPORTS ON FILE. YOUR FIRST LOG STARTS THE RECORD.</p>}
    </section>}
+
+   {zoom&&<div className="lightbox" role="dialog" aria-modal="true" aria-label={`${zoom.name} illustration`} onClick={()=>setZoom(null)}>
+    <div className="lightbox-card" onClick={ev=>ev.stopPropagation()}>
+     <div className="lightbox-head"><b>{zoom.name.toUpperCase()}</b><button type="button" className="icon-btn" onClick={()=>setZoom(null)} aria-label="Close" autoFocus><X size={18}/></button></div>
+     <img src={zoom.src} alt={`${zoom.name}: start and finish positions`}/>
+     <p>Red marks the main working muscles. Press Esc or click outside to close.</p>
+    </div>
+   </div>}
 
    <footer>
     <div><Flag size={14}/> IRON STANDARD <span className="sep">//</span> LOCAL FITNESS OPERATIONS</div>
