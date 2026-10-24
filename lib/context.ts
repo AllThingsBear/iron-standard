@@ -33,7 +33,7 @@ You are acting as my strength & conditioning coach / personal trainer. Evaluate 
 - You are not a clinician and this is not medical advice; say when something needs a professional.
 
 ## HOW TO READ THE DATA
-- Weights are in ${w}. Pain is my per-set 0-10 score (blank = not recorded; 0 = none). Notes are free text about pain/form.
+- Weights are in ${w}. Pain is my per-set 0-10 score (blank = not recorded; 0 = none). Each set's notes are general free text: how the set went, form, effort, pain, tingling, anything else.
 - Rest time is not tracked.
 `;
 }

@@ -5,6 +5,7 @@ import {Exercise,Program} from '../lib/program';
 import ProgramEditor from './ProgramEditor';
 import DataPanel from './DataPanel';
 import {figureFor} from '../lib/figures';
+import {recommend,TrainerRec,Rec} from '../lib/progression';
 import {Profile,defaultProfile,EQUIPMENT,wUnit,sUnit} from '../lib/units';
 
 type Entry={day:string;exercise_id:string;done:number;weight:number|null;reps:string;notes:string};
@@ -92,6 +93,7 @@ export default function Page(){
  const [profile,setProfile]=useState<Profile>(defaultProfile);
  const [prog,setProg]=useState<Program|null>(null);
  const [sets,setSets]=useState<SetEntry[]>([]);
+ const [recs,setRecs]=useState<TrainerRec[]>([]);
  const [sessions,setSessions]=useState<Sess[]>([]);
  const [notes,setNotes]=useState<Note[]>([]);
  const [noteText,setNoteText]=useState('');
@@ -107,7 +109,7 @@ export default function Page(){
  const [saving,setSaving]=useState(false);
  const [tab,setTab]=useState<'mission'|'history'|'profile'|'program'|'data'>('mission');
 
- const load=async()=>{const r=await fetch('/api/state',{cache:'no-store'});if(!r.ok)throw new Error('Load failed');const data=await r.json();setEntries(data.exercises);setDays(data.days);setSets(data.sets||[]);setSessions(data.sessions||[]);setNotes(data.notes||[]);setProfile(data.profile);setProg(data.program);};
+ const load=async()=>{const r=await fetch('/api/state',{cache:'no-store'});if(!r.ok)throw new Error('Load failed');const data=await r.json();setEntries(data.exercises);setDays(data.days);setSets(data.sets||[]);setSessions(data.sessions||[]);setNotes(data.notes||[]);setRecs(data.recommendations||[]);setProfile(data.profile);setProg(data.program);};
  useEffect(()=>{const q=new URLSearchParams(window.location.search).get('date');setDate(q&&/^\d{4}-\d{2}-\d{2}$/.test(q)?q:todayKey());load().catch(()=>setMessage('Database unavailable. Check Docker logs.')).finally(()=>setLoading(false))},[]);
  useEffect(()=>{if(!message)return;const t=setTimeout(()=>setMessage(''),4000);return()=>clearTimeout(t)},[message]);
 
@@ -139,13 +141,15 @@ export default function Page(){
  function setRows(e:Exercise):SetDraft[]{
   if(setsDraft[e.id])return setsDraft[e.id];
   const mine=sets.filter(x=>x.day===date&&x.exercise_id===e.id).sort((a,b)=>a.set_no-b.set_no).map(x=>({weight:String(x.weight??''),reps:String(x.reps??''),pain:String(x.pain??''),notes:x.notes??''}));
-  while(mine.length<e.sets)mine.push({weight:'',reps:'',pain:'',notes:''});
+  while(mine.length<e.sets)mine.push({weight:'',reps:'',pain:'0',notes:''});
   return mine;
  }
+ const recFor=(e:Exercise):Rec=>recommend(e,sets,recs.find(r=>r.exercise_id===e.id),profile.units,date);
+ function applyRec(e:Exercise,rec:Rec){if(rec.weight==null)return;const w=String(rec.weight);const rows=setRows(e).map(r=>r.weight===''?{...r,weight:w}:r);setSetsDraft(o=>({...o,[e.id]:rows}))}
  function editSet(e:Exercise,i:number,field:keyof SetDraft,value:string){const rows=setRows(e).map((r,j)=>j===i?{...r,[field]:value}:r);setSetsDraft(o=>({...o,[e.id]:rows}))}
- function addSet(e:Exercise){const rows=setRows(e);const last=rows[rows.length-1];setSetsDraft(o=>({...o,[e.id]:[...rows,{weight:last?.weight??'',reps:'',pain:'',notes:''}]}))}
+ function addSet(e:Exercise){const rows=setRows(e);const last=rows[rows.length-1];setSetsDraft(o=>({...o,[e.id]:[...rows,{weight:last?.weight??'',reps:'',pain:'0',notes:''}]}))}
  async function saveSets(e:Exercise){
-  const rows=setRows(e).filter(r=>r.weight||r.reps||r.pain||r.notes);
+  const rows=setRows(e).filter(r=>r.weight||r.reps||r.notes||(r.pain!==''&&r.pain!=='0'));
   try{setSaving(true);const r=await fetch('/api/sets',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({day:date,exercise_id:e.id,sets:rows})});if(!r.ok)throw new Error();
    if(rows.length&&!effective(e).done){await fetch('/api/log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({day:date,exercise_id:e.id,...effective(e),done:true})})}
    await load();setMessage('SETS SAVED')}catch{setMessage('SAVE FAILED — CHECK VALUES (PAIN 0–10)')}finally{setSaving(false)}
@@ -303,7 +307,7 @@ export default function Page(){
          <div className="exercise-number">{String(i+1).padStart(2,'0')}</div>
          <div className="exercise-title">
           <strong>{e.name}</strong>
-          <small><span className="chip">{e.category}</span><span className="meta">{e.sets} SETS × {e.reps}</span></small>
+          <small><span className="chip">{e.category}</span><span className="meta">{e.sets} SETS × {e.reps}</span>{(()=>{const r=recFor(e);return r.weight!=null?<span className={'chip rec-chip rec-'+r.kind} title={r.reason}>{r.source==='trainer'?'PICK':'REC'} {r.weight} {wu}</span>:null})()}</small>
          </div>
          <button className={'expand '+(open?'is-open':'')} onClick={()=>setExpanded(x=>({...x,[e.id]:!x[e.id]}))} aria-expanded={open} aria-controls={`details-${e.id}`}><NotebookPen size={15}/><span>{open?'CLOSE':'LOG SET'}</span></button>
         </div>
@@ -311,13 +315,18 @@ export default function Page(){
         <p className="exercise-desc">{e.description}</p>
         {e.caution&&<p className="caution"><ShieldAlert size={15}/><span><b>CAUTION</b> {e.caution}</span></p>}
         {open&&<div className="exercise-details sets-editor" id={`details-${e.id}`}>
-         <div className="set-head" aria-hidden="true"><span>SET</span><span>WEIGHT ({wu})</span><span>REPS</span><span>PAIN 0–10</span><span>NOTE</span></div>
+         {(()=>{const rec=recFor(e);return <div className={'rec-box rec-'+rec.kind}>
+         <div className="rec-top"><b>{rec.source==='trainer'?'TRAINER PICK':'SUGGESTED'}</b><span className="rec-w">{rec.weight!=null?`${rec.weight} ${wu}`:rec.kind==='bodyweight'?'BODYWEIGHT':'YOUR CALL'}</span><span className="rec-r">{rec.targetReps}</span>{rec.weight!=null&&<button type="button" className="ghost sm" onClick={()=>applyRec(e,rec)}>FILL {rec.weight} {wu}</button>}</div>
+         <p>{rec.reason}</p>
+         {rec.last&&<small>LAST ({fmt(rec.last.day)}): {rec.last.summary}</small>}
+        </div>})()}
+        <div className="set-head" aria-hidden="true"><span>SET</span><span>WEIGHT ({wu})</span><span>REPS</span><span>PAIN 0–10</span><span>NOTES</span></div>
          {setRows(e).map((r,i)=><div className="set-row" key={i}>
           <span className="set-no">{i+1}</span>
           <input type="number" inputMode="decimal" min="0" max="500" step="0.5" aria-label={`${e.name} set ${i+1} weight`} placeholder={wu.toLowerCase()} value={r.weight} onChange={x=>editSet(e,i,'weight',x.target.value)}/>
           <input type="number" inputMode="numeric" min="0" max="500" aria-label={`${e.name} set ${i+1} reps`} placeholder="reps" value={r.reps} onChange={x=>editSet(e,i,'reps',x.target.value)}/>
           <select aria-label={`${e.name} set ${i+1} pain`} className={'pain p'+(r.pain===''?'x':Number(r.pain)>=4?'hi':Number(r.pain)>=1?'mid':'0')} value={r.pain} onChange={x=>editSet(e,i,'pain',x.target.value)}><option value="">—</option>{Array.from({length:11},(_,n)=><option key={n} value={n}>{n}</option>)}</select>
-          <input className="set-note" aria-label={`${e.name} set ${i+1} note`} placeholder="Pain location, form, tingling…" value={r.notes} onChange={x=>editSet(e,i,'notes',x.target.value)}/>
+          <input className="set-note" aria-label={`${e.name} set ${i+1} notes`} placeholder="Notes: how it felt, form, pain, tingling…" maxLength={500} value={r.notes} onChange={x=>editSet(e,i,'notes',x.target.value)}/>
          </div>)}
          <div className="set-actions">
           <button className="ghost" onClick={()=>addSet(e)}><Plus size={14}/> ADD SET</button>

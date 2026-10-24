@@ -14,6 +14,7 @@ export function db(){
       CREATE TABLE IF NOT EXISTS daily_log (day TEXT PRIMARY KEY, calories INTEGER, protein INTEGER, walk_minutes INTEGER, weight REAL, waist REAL, notes TEXT, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
       CREATE TABLE IF NOT EXISTS set_log (day TEXT NOT NULL, exercise_id TEXT NOT NULL, set_no INTEGER NOT NULL, weight REAL, reps INTEGER, pain INTEGER, notes TEXT, PRIMARY KEY(day,exercise_id,set_no));
       CREATE TABLE IF NOT EXISTS trainer_notes (id INTEGER PRIMARY KEY AUTOINCREMENT, day TEXT NOT NULL, author TEXT NOT NULL, body TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE IF NOT EXISTS recommendations (exercise_id TEXT PRIMARY KEY, weight REAL, reps TEXT, note TEXT, author TEXT NOT NULL DEFAULT 'Trainer', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
       CREATE TABLE IF NOT EXISTS session_log (day TEXT PRIMARY KEY, general_note TEXT, confirmed_at TEXT, sent_at TEXT);`);
   }
   return instance;

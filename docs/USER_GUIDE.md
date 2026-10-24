@@ -17,11 +17,19 @@ The **Daily Mission** tab shows the session scheduled for the selected date. Use
 
 1. Read the exercise description and any caution note.
 2. Tick the checkbox when an exercise is done, **or** click **LOG SET** and record each set.
-3. For each set enter weight, reps, an optional **pain score (0–10)** and a note (pain location, form, tingling…). Saving sets also marks the exercise complete.
+3. Each exercise shows a **suggested weight** (see Suggested weights below). For each set enter weight, reps, a **pain score (0–10, defaults to 0)** and optional **notes** (how it felt, form, pain location, tingling, anything you want to remember). Saving sets also marks the exercise complete.
 4. Add daily metrics (weight, waist, calories, protein, walking) in **Daily Intel**.
 5. When you finish, write a general note in the **After-Action Report** and click **Confirm workout**.
 
 Pain scores matter: a trainer (human or AI) can only spot a trend if you record a number each time. 0 means none; 4 or higher is a stop-and-adjust signal.
+
+## Suggested weights
+
+Every exercise shows a recommended weight (a chip next to its sets and reps, and a box when you open **Log set**). A **Fill** button copies it into the empty weight boxes.
+
+- **Suggested** comes from your own history, using simple, conservative rules. It only ever changes the **weight**, never your sets or volume. It adds one small step (5 lb / 2.5 kg) only when every set hit the top of the rep range with pain at 0–1. It holds the weight if pain was 2–3, if pain wasn't recorded, or if your notes mention pain. It drops about 20% if pain reached 4 or more. Timed exercises build duration first, and bodyweight exercises get a rep or tempo target. With no history it asks you to start light.
+- **Trainer pick** is a weight your trainer (human or AI) set for that exercise, with a short reason. It wins over the automatic suggestion until you log a newer session of that exercise.
+- Suggestions are guidance, not medical advice. You decide the weight.
 
 ## Editing your program
 

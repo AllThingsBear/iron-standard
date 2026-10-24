@@ -90,7 +90,10 @@ test('program editor saves, validates, preserves ids, and reports removed exerci
   assert.match(r.json.text, /removedMove \[not in the current program/);
 });
 test('export, import (merge + replace), backup, restore', async () => {
+  assert.equal((await call('/api/recommendation', { exercise_id: 'pushupA', weight: 35, reps: '3 x 8-12', note: 'n', author: 'Coach' })).status, 200);
+  assert.equal((await call('/api/recommendation', { exercise_id: 'pushupA', weight: -5 })).status, 400);
   const exp = await (await fetch(BASE + '/api/export')).json();
+  assert.equal(exp.recommendations.length, 1);
   assert.equal(exp.format, 'iron-standard-export');
   assert.ok(exp.set_log.length >= 1 && exp.trainer_notes.length >= 1);
   const csv = await (await fetch(BASE + '/api/export?format=csv')).text();
@@ -122,6 +125,7 @@ test('export, import (merge + replace), backup, restore', async () => {
   assert.equal(restored.sets.length, before.sets.length);
   assert.equal(restored.notes.length, before.notes.length);
   assert.equal(restored.profile.units, 'metric');
+  assert.equal(restored.recommendations.length, 1, 'trainer picks survive backup/restore');
   assert.equal(restored.program.sessions.chestA.exercises[0].id, 'pushupA');
 });
 test('backup names cannot escape the backups folder', async () => {

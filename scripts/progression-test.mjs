@@ -1,0 +1,26 @@
+// Unit tests for the weight-suggestion rules. Run: npm run test:unit  (needs Node 22.6+ for --experimental-strip-types)
+import { recommend } from '../lib/progression.ts';
+import assert from 'node:assert/strict';
+const ex = (reps = '8–12', sets = 3) => ({ id: 'x', name: 'X', sets, reps, category: 'STRENGTH', description: '' });
+const S = (day, rows) => rows.map(([weight, reps, pain, notes], i) => ({ day, exercise_id: 'x', set_no: i + 1, weight, reps, pain, notes: notes ?? null }));
+const R = (e, hist, tr, units = 'imperial', date = '2026-10-26') => recommend(e, hist, tr, units, date);
+const t = (name, fn) => { try { fn(); console.log('  ok  ', name); } catch (e) { console.log('  FAIL', name, '-', e.message); process.exitCode = 1; } };
+
+t('no history -> start, no weight', () => { const r = R(ex(), []); assert.equal(r.kind, 'start'); assert.equal(r.weight, null); });
+t('all sets at top of range, pain 0 -> +5 lb', () => { const r = R(ex(), S('2026-10-22', [[50, 12, 0], [50, 12, 0], [50, 12, 0]])); assert.equal(r.kind, 'progress'); assert.equal(r.weight, 55); });
+t('metric increments by 2.5 kg', () => { const r = R(ex(), S('2026-10-22', [[20, 12, 0], [20, 12, 0], [20, 12, 0]]), undefined, 'metric'); assert.equal(r.weight, 22.5); });
+t('pain NOT recorded -> never progress (hold)', () => { const r = R(ex(), S('2026-10-22', [[50, 12, null], [50, 12, null], [50, 12, null]])); assert.equal(r.kind, 'hold'); assert.equal(r.weight, 50); });
+t('pain 2 -> hold', () => { const r = R(ex(), S('2026-10-22', [[50, 12, 2], [50, 12, 0], [50, 12, 0]])); assert.equal(r.kind, 'hold'); });
+t('pain 4 -> regress ~20%', () => { const r = R(ex(), S('2026-10-22', [[50, 12, 4], [50, 10, 4], [50, 8, 5]])); assert.equal(r.kind, 'regress'); assert.equal(r.weight, 40); });
+t('notes mention pain with pain=0 -> hold', () => { const r = R(ex(), S('2026-10-22', [[50, 12, 0, 'sharp pain in the right shoulder'], [50, 12, 0], [50, 12, 0]])); assert.equal(r.kind, 'hold'); });
+t('"no pain" note does not block progression', () => { const r = R(ex(), S('2026-10-22', [[50, 12, 0, 'no pain, felt great'], [50, 12, 0], [50, 12, 0, 'without any tingling']])); assert.equal(r.kind, 'progress'); });
+t('below top of range -> repeat same weight', () => { const r = R(ex(), S('2026-10-22', [[50, 12, 0], [50, 10, 0], [50, 9, 0]])); assert.equal(r.kind, 'repeat'); assert.equal(r.weight, 50); });
+t('timed exercise -> build duration, same weight', () => { const r = R(ex('20–30 sec'), S('2026-10-22', [[30, 30, 0], [30, 30, 0], [30, 30, 0]])); assert.equal(r.kind, 'time'); assert.equal(r.weight, 30); });
+t('bodyweight -> no weight suggested', () => { const r = R(ex('8–15', 2), S('2026-10-22', [[null, 15, 0], [null, 15, 0]])); assert.equal(r.kind, 'bodyweight'); assert.equal(r.weight, null); });
+t('mis-entered row (weight but no reps) is ignored', () => { const r = R(ex(), S('2026-10-22', [[12, null, 0], [12, null, 0]])); assert.equal(r.kind, 'start'); });
+t('stale (>3 weeks) -> ease back in ~90%', () => { const r = R(ex(), S('2026-09-01', [[50, 12, 0], [50, 12, 0], [50, 12, 0]])); assert.equal(r.kind, 'repeat'); assert.equal(r.weight, 45); });
+t('only uses sessions BEFORE the viewed date', () => { const h = [...S('2026-10-19', [[30, 10, 0], [30, 10, 0], [30, 10, 0]]), ...S('2026-10-30', [[99, 12, 0]])]; assert.equal(R(ex(), h).weight, 30); });
+const tr = { exercise_id: 'x', weight: 35, reps: '3 × 8–12', note: 'trainer says', author: 'Coach', created_at: '2026-10-23 03:00:00' };
+t('current trainer pick wins over auto', () => { const r = R(ex(), S('2026-10-19', [[50, 12, 0], [50, 12, 0], [50, 12, 0]]), tr); assert.equal(r.kind, 'trainer'); assert.equal(r.weight, 35); });
+t('trainer pick expires once a newer session is logged', () => { const r = R(ex(), S('2026-10-25', [[35, 12, 0], [35, 12, 0], [35, 12, 0]]), tr, 'imperial', '2026-10-26'); assert.equal(r.kind, 'progress'); assert.equal(r.weight, 40); });
+console.log(process.exitCode ? 'FAILURES' : 'all passed');

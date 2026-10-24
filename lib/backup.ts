@@ -11,7 +11,7 @@ const MAX_ROWS=200000;
 const DAY=/^\d{4}-\d{2}-\d{2}$/;
 
 export type ExportFile={format:'iron-standard-export';version:1;appVersion:string;exportedAt:string;profile?:unknown;program?:unknown;
-  exercise_log:any[];daily_log:any[];set_log:any[];session_log:any[];trainer_notes:any[]};
+  exercise_log:any[];daily_log:any[];set_log:any[];session_log:any[];trainer_notes:any[];recommendations?:any[]};
 
 const rows=(d:Database.Database,sql:string)=>{try{return d.prepare(sql).all() as any[]}catch{return []}};
 
@@ -22,7 +22,8 @@ export function gatherExport():ExportFile{
     daily_log:rows(d,'SELECT day,calories,protein,walk_minutes,weight,waist,notes FROM daily_log ORDER BY day'),
     set_log:rows(d,'SELECT day,exercise_id,set_no,weight,reps,pain,notes FROM set_log ORDER BY day,exercise_id,set_no'),
     session_log:rows(d,'SELECT day,general_note,confirmed_at,sent_at FROM session_log ORDER BY day'),
-    trainer_notes:rows(d,'SELECT day,author,body,created_at FROM trainer_notes ORDER BY id')};
+    trainer_notes:rows(d,'SELECT day,author,body,created_at FROM trainer_notes ORDER BY id'),
+    recommendations:rows(d,'SELECT exercise_id,weight,reps,note,author,created_at FROM recommendations')};
 }
 
 // Read a backup .db file (read-only) into the same shape as an export.
@@ -38,7 +39,8 @@ export function readBackupAsExport(name:string):ExportFile{
       daily_log:rows(b,'SELECT day,calories,protein,walk_minutes,weight,waist,notes FROM daily_log'),
       set_log:rows(b,'SELECT day,exercise_id,set_no,weight,reps,pain,notes FROM set_log'),
       session_log:rows(b,'SELECT day,general_note,confirmed_at,sent_at FROM session_log'),
-      trainer_notes:rows(b,'SELECT day,author,body,created_at FROM trainer_notes ORDER BY id')};
+      trainer_notes:rows(b,'SELECT day,author,body,created_at FROM trainer_notes ORDER BY id'),
+      recommendations:rows(b,'SELECT exercise_id,weight,reps,note,author,created_at FROM recommendations')};
   }finally{b.close()}
 }
 
@@ -64,6 +66,7 @@ export function parseExport(raw:any){
     daily_log:list(raw.daily_log,'daily_log').map(r=>({day:day(r.day),calories:num(r.calories,20000,true),protein:num(r.protein,2000,true),walk_minutes:num(r.walk_minutes,1440,true),weight:num(r.weight,1500),waist:num(r.waist,500),notes:str(r.notes,2000)})),
     set_log:list(raw.set_log,'set_log').map(r=>({day:day(r.day),exercise_id:exId(r.exercise_id),set_no:num(r.set_no,100,true)||1,weight:num(r.weight,500),reps:num(r.reps,500,true),pain:num(r.pain,10,true),notes:str(r.notes,500)})),
     session_log:list(raw.session_log,'session_log').map(r=>({day:day(r.day),general_note:str(r.general_note,4000),confirmed_at:r.confirmed_at?str(r.confirmed_at,40):null,sent_at:r.sent_at?str(r.sent_at,40):null})),
+    recommendations:list(raw.recommendations,'recommendations').map(r=>({exercise_id:exId(r.exercise_id),weight:num(r.weight,1500),reps:str(r.reps,60),note:str(r.note,600),author:str(r.author,80)||'Trainer',created_at:str(r.created_at,40)||new Date().toISOString()})),
     trainer_notes:list(raw.trainer_notes,'trainer_notes').map(r=>{const body=str(r.body,20000).trim(),author=str(r.author,80).trim();if(!body||!author)throw new Error('Empty trainer note in file');return {day:day(r.day),author,body,created_at:str(r.created_at,40)||new Date().toISOString()}})
   };
 }
@@ -71,9 +74,9 @@ export type Clean=ReturnType<typeof parseExport>;
 
 export function applyImport(c:Clean,mode:'merge'|'replace'){
   const d=db();
-  const counts={exercise_log:0,daily_log:0,set_log:0,session_log:0,trainer_notes:0};
+  const counts={exercise_log:0,daily_log:0,set_log:0,session_log:0,trainer_notes:0,recommendations:0};
   d.transaction(()=>{
-    if(mode==='replace'){for(const t of ['exercise_log','daily_log','set_log','session_log','trainer_notes'])d.prepare(`DELETE FROM ${t}`).run();importSettings(c.profile,c.program)}
+    if(mode==='replace'){for(const t of ['exercise_log','daily_log','set_log','session_log','trainer_notes','recommendations'])d.prepare(`DELETE FROM ${t}`).run();importSettings(c.profile,c.program)}
     const ex=d.prepare('INSERT OR REPLACE INTO exercise_log(day,exercise_id,done,weight,reps,notes) VALUES(@day,@exercise_id,@done,@weight,@reps,@notes)');
     for(const r of c.exercise_log){ex.run(r);counts.exercise_log++}
     const dl=d.prepare('INSERT OR REPLACE INTO daily_log(day,calories,protein,walk_minutes,weight,waist,notes) VALUES(@day,@calories,@protein,@walk_minutes,@weight,@waist,@notes)');
@@ -82,6 +85,8 @@ export function applyImport(c:Clean,mode:'merge'|'replace'){
     for(const r of c.set_log){sl.run(r);counts.set_log++}
     const se=d.prepare('INSERT OR REPLACE INTO session_log(day,general_note,confirmed_at,sent_at) VALUES(@day,@general_note,@confirmed_at,@sent_at)');
     for(const r of c.session_log){se.run(r);counts.session_log++}
+    const rc=d.prepare('INSERT OR REPLACE INTO recommendations(exercise_id,weight,reps,note,author,created_at) VALUES(@exercise_id,@weight,@reps,@note,@author,@created_at)');
+    for(const r of c.recommendations){rc.run(r);counts.recommendations++}
     const dup=d.prepare('SELECT 1 FROM trainer_notes WHERE day=? AND author=? AND body=? AND created_at=?');
     const tn=d.prepare('INSERT INTO trainer_notes(day,author,body,created_at) VALUES(@day,@author,@body,@created_at)');
     for(const r of c.trainer_notes){if(dup.get(r.day,r.author,r.body,r.created_at))continue;tn.run(r);counts.trainer_notes++}

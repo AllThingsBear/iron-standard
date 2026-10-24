@@ -476,3 +476,18 @@ footer span{color:var(--tan)}
 .backup-list small{font-family:var(--font-mono);font-size:10px;color:var(--mute);letter-spacing:.06em}
 .backup-list .ghost.sm{padding:7px 10px}
 @media (max-width:640px){.data-info>div{grid-template-columns:1fr}}
+
+/* ===== recommended weights ===== */
+.rec-chip{border-color:var(--olive-2)!important;color:var(--olive-2)!important}
+.rec-chip.rec-trainer{border-color:var(--tan)!important;color:var(--tan-2)!important}
+.rec-chip.rec-regress,.rec-chip.rec-hold{border-color:var(--amber)!important;color:var(--amber)!important}
+.rec-box{margin-bottom:14px;padding:12px 14px;border:1px solid var(--edge-2);border-left:4px solid var(--olive-2);background:var(--bg)}
+.rec-box.rec-trainer{border-left-color:var(--tan)}
+.rec-box.rec-regress,.rec-box.rec-hold{border-left-color:var(--amber)}
+.rec-top{display:flex;flex-wrap:wrap;align-items:center;gap:12px;font-family:var(--font-mono);font-size:11px;letter-spacing:.1em}
+.rec-top b{color:var(--dim);font-size:10px;letter-spacing:.14em}
+.rec-w{font-family:var(--font-display);font-size:24px;letter-spacing:.02em;color:var(--text)}
+.rec-r{color:var(--tan-2)}
+.rec-top .ghost{margin-left:auto;padding:7px 10px;border:1px solid var(--edge-hi);background:var(--sunken);color:var(--text-2);font-weight:700}
+.rec-box p{margin:8px 0 0;font-size:12.5px;line-height:1.6;color:var(--text-2)}
+.rec-box small{display:block;margin-top:6px;font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;color:var(--mute)}
