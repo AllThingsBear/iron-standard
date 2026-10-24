@@ -45,6 +45,17 @@ Your key is stored only in `data/ai.json` on your computer. It is never shown ag
 
 [Ollama](https://ollama.com) runs open AI models on your own computer. We tested this with **Gemma 4 12B** on an NVIDIA RTX 5080 (16 GB).
 
+### The easy way: guided setup in the app
+
+Open **PROFILE → AI trainer → OLLAMA (LOCAL)**. The app walks you through four steps and ticks each one off:
+
+1. **Check your computer.** It reads your graphics card, memory and free disk space and recommends a model (or tells you honestly if local AI is a poor fit and suggests the Claude CLI or an API key).
+2. **Install Ollama.** If Ollama isn't found, a button opens the official download page (ollama.com/download). Install it like any program and open it once; the page notices automatically within a few seconds. The app does not install it for you, so you always see what is being installed.
+3. **Download a model.** Pick a model and click **Download**. You get a progress bar and a **Cancel** button. The download is handled by Ollama and can be resumed.
+4. **Connect it.** One click creates the helper model and runs a test message. When it says "All set", use **Ask AI trainer** on any confirmed workout.
+
+Later you can use **Turn off local AI** (removes only the helper model) or **Turn off + delete model** (also frees the disk space). The manual steps below do the same thing by hand and explain what the app does.
+
 ### Step 0: Check your hardware
 
 The model should fit in your graphics card's memory (VRAM). Sizes below are the download sizes listed on [Ollama's Gemma 4 page](https://ollama.com/library/gemma4); real use is higher because of the context window.
@@ -116,6 +127,7 @@ A container cannot reach an Ollama server that listens only on `127.0.0.1` of th
 - **Empty reply or "ran out of tokens while thinking"**: use **Set up for IRON STANDARD** (it raises the context), close other GPU-heavy programs, or try a smaller or non-reasoning model.
 - **Very slow:** run `ollama ps`. If it is not `100% GPU`, the model is too big for your card.
 - **Out of memory:** pick a smaller model, and close games or video editors before asking.
+- **Cancelled or interrupted download:** Ollama keeps the partial file so the download can resume, and cancelling can take a few seconds to take effect. If you never want that model, the partial files are in `C:\Users\<you>\.ollama\models\blobs` (files whose names contain `-partial`); you can delete them once nothing is downloading. Starting the download again resumes it instead.
 - **Uninstall:** remove the helper copy with `ollama rm iron-standard-trainer`, remove models with `ollama rm gemma4:12b`, and uninstall Ollama from Windows Settings → Apps. Your IRON STANDARD data is separate and untouched.
 
 ---

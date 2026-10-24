@@ -543,3 +543,24 @@ footer span{color:var(--tan)}
 .ollama-box select{display:block;width:100%;margin-top:6px;background:var(--bg);color:var(--text);border:1px solid var(--edge-2);padding:10px 12px;font-family:var(--font-mono);font-size:13px;border-radius:0}
 .ollama-box .ai-status{margin:0}
 .ai-settings a{color:var(--tan-2)}
+
+/* guided local-AI wizard */
+.wizard{margin-top:14px;display:grid;gap:10px}
+.wiz-step{border:1px solid var(--edge-2);background:var(--sunken);padding:12px 14px}
+.wiz-step.is-done{border-left:4px solid var(--success)}
+.wiz-head{display:flex;align-items:center;gap:10px;font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;color:var(--text)}
+.wiz-n{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border:1px solid var(--edge-hi);color:var(--tan);font-size:11px}
+.wiz-step.is-done .wiz-n{background:var(--success);border-color:var(--success);color:var(--olive-ink)}
+.wiz-body{margin-top:10px;display:grid;gap:8px}
+.hw-list{list-style:none;margin:0;padding:0;display:grid;gap:4px;font-size:13px;color:var(--text-2)}
+.hw-list li span{display:inline-block;width:92px;font-family:var(--font-mono);font-size:9px;letter-spacing:.14em;color:var(--mute)}
+.badge-sm{font-style:normal;font-family:var(--font-mono);font-size:9px;letter-spacing:.1em;padding:2px 6px;border:1px solid var(--amber);color:var(--amber);margin-left:6px}
+.badge-sm.ok{border-color:var(--success);color:var(--success)}
+.wiz-body .ghost.sm{justify-self:start;display:inline-flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid var(--edge-2);background:var(--bg);color:var(--text-2);font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;font-weight:700}
+.wiz-body a.save{text-decoration:none}
+.pull .bar{height:10px;background:var(--bg);border:1px solid var(--edge-2);overflow:hidden}
+.pull .bar>div{height:100%;background:linear-gradient(90deg,var(--tan),var(--olive-2));transition:width .3s}
+.pull .ghost{margin-top:6px;padding:8px 12px;border:1px solid var(--edge-hi);color:var(--text-2);font-family:var(--font-mono);font-size:10px;letter-spacing:.1em}
+.wiz-remove{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:4px 2px}
+.wiz-remove .ghost.sm{padding:7px 10px;border:1px solid var(--edge-2);background:var(--bg);color:var(--text-2);font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;font-weight:700}
+.wiz-remove .danger:hover{color:#e89a8d;border-color:var(--red)}

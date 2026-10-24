@@ -41,6 +41,8 @@ const mock = http.createServer((req, res) => {
     if (req.url === '/v1/chat/completions') return res.end(JSON.stringify({ choices: [{ message: { content: JSON.stringify(body).includes('connectivity test') ? 'OK' : '<think>hidden reasoning</think>' + String.fromCharCode(10) + REPLY } }] }));
     if (req.url === '/v1/messages') return res.end(JSON.stringify({ content: [{ type: 'text', text: JSON.stringify(body).includes('connectivity test') ? 'OK' : REPLY }] }));
     if (req.url === '/api/tags') return res.end(JSON.stringify({ models: [{ name: 'gemma4:12b', size: 8000000000 }, { name: 'iron-standard-trainer:latest', size: 8000000000 }] }));
+    if (req.url === '/api/pull') { res.setHeader('Content-Type', 'application/x-ndjson'); return res.end(['{"status":"pulling manifest"}', '{"status":"pulling aaa","digest":"sha256:aaa","total":1000,"completed":500}', '{"status":"success"}'].join(String.fromCharCode(10)) + String.fromCharCode(10)); }
+    if (req.url === '/api/delete') { seen.push({ url: '/api/delete', method: req.method, body }); return res.end('{}'); }
     if (req.url === '/api/create') { seen.push({ url: '/api/create', body }); return res.end(JSON.stringify({ status: 'success' })); }
     res.statusCode = 404; res.end('{}');
   });
@@ -210,6 +212,17 @@ test('Ollama helper: lists models, creates the app-scoped model, only talks to l
   assert.equal(made.from, 'gemma4:12b'); assert.equal(made.parameters.num_ctx, 16384);
   assert.equal((await call('/api/ai/ollama', { action: 'prepare', from: 'bad name; rm -rf' })).status, 400);
   assert.equal((await call('/api/ai/ollama', { action: 'nope' })).status, 400);
+  // guided setup: hardware report, streamed download (catalog only), removal (our models only)
+  const hwr = await call('/api/ai/ollama', { action: 'hardware' });
+  assert.equal(hwr.status, 200); assert.ok(typeof hwr.json.hardware.ramGb === 'number' && hwr.json.catalog.length === 3);
+  const pull = await fetch(BASE + '/api/ai/ollama', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'pull', model: 'gemma4:12b' }) });
+  assert.equal(pull.status, 200); assert.match(pull.headers.get('content-type'), /ndjson/);
+  const pulled = (await pull.text()).trim().split(String.fromCharCode(10)).map(l => JSON.parse(l));
+  assert.equal(pulled.at(-1).status, 'success'); assert.equal(pulled[1].completed, 500);
+  assert.equal((await call('/api/ai/ollama', { action: 'pull', model: 'llama3:70b' })).status, 400, 'only catalog models can be pulled');
+  assert.equal((await call('/api/ai/ollama', { action: 'remove', model: 'some-other-model' })).status, 400, 'only our own models can be removed');
+  assert.equal((await call('/api/ai/ollama', { action: 'remove', model: 'iron-standard-trainer' })).status, 200);
+  assert.equal(seen.filter(s => s.url === '/api/delete').pop().method, 'DELETE');
   // a non-loopback configured URL must never be contacted: it falls back to the default local address
   assert.equal((await call('/api/ai/config', { provider: 'openai', baseUrl: 'https://evil.example.com/v1' })).status, 200);
   const m2 = await call('/api/ai/ollama', { action: 'models' });

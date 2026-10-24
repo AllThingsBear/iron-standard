@@ -35,3 +35,38 @@ export async function prepareTrainerModel(from:string){
   if(!r.ok){let m='';try{m=(await r.json()).error||''}catch{}throw new Error(`Ollama could not create the model${m?`: ${String(m).slice(0,200)}`:` (HTTP ${r.status})`}`)}
   return {model:TRAINER_MODEL,baseUrl:`${origin}/v1`};
 }
+
+// ---- hardware detection (server only) ----
+import os from 'node:os';
+import fs from 'node:fs';
+import {spawnSync} from 'node:child_process';
+import {CATALOG,recommendModel,Hardware} from './localAi';
+
+export function detectHardware():Hardware{
+  const ramGb=Math.round(os.totalmem()/2**30);
+  let gpu:Hardware['gpu']=null;
+  try{
+    const r=spawnSync('nvidia-smi',['--query-gpu=name,memory.total','--format=csv,noheader,nounits'],{encoding:'utf8',timeout:6000,windowsHide:true});
+    if(r.status===0)for(const line of String(r.stdout).split('\n')){
+      const [name,mib]=line.split(',').map(s=>s.trim());const gb=Number(mib)/1024;
+      if(name&&Number.isFinite(gb)&&(!gpu||gb>gpu.vramGb))gpu={name,vramGb:Math.round(gb*10)/10};
+    }
+  }catch{}
+  const adapters:string[]=[];
+  if(!gpu&&process.platform==='win32'){
+    try{const r=spawnSync('powershell',['-NoProfile','-Command','(Get-CimInstance Win32_VideoController).Name'],{encoding:'utf8',timeout:8000,windowsHide:true});
+      if(r.status===0)for(const l of String(r.stdout).split('\n').map(s=>s.trim()).filter(Boolean))adapters.push(l)}catch{}
+  }
+  let freeDiskGb:number|null=null;
+  try{const s=fs.statfsSync(os.homedir());freeDiskGb=Math.round(Number(s.bavail)*Number(s.bsize)/2**30)}catch{}
+  return {gpu,adapters,ramGb,freeDiskGb,platform:process.platform,appleSilicon:process.platform==='darwin'&&process.arch==='arm64'};
+}
+export function hardwareReport(){const hardware=detectHardware();return {hardware,recommendation:recommendModel(hardware),catalog:CATALOG}}
+export const allowedPull=(tag:string)=>CATALOG.some(m=>m.tag===tag);
+export const allowedDelete=(tag:string)=>tag===TRAINER_MODEL||allowedPull(tag);
+
+export async function deleteModel(tag:string){
+  if(!allowedDelete(tag))throw new Error('That model cannot be deleted from here.');
+  const r=await fetch(`${ollamaOrigin()}/api/delete`,{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:tag}),signal:AbortSignal.timeout(30000)}).catch(()=>{throw new Error('Could not reach Ollama.')});
+  if(!r.ok&&r.status!==404)throw new Error(`Ollama could not delete the model (HTTP ${r.status}).`);
+}

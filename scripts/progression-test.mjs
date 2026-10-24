@@ -3,6 +3,7 @@ import { recommend } from '../lib/progression.ts';
 import { infoFor } from '../lib/exerciseInfo.ts';
 import { library } from '../lib/library.ts';
 import { starterProgram } from '../lib/program.ts';
+import { recommendModel, foldPull, CATALOG } from '../lib/localAi.ts';
 import assert from 'node:assert/strict';
 const ex = (reps = '8–12', sets = 3) => ({ id: 'x', name: 'X', sets, reps, category: 'STRENGTH', description: '' });
 const S = (day, rows) => rows.map(([weight, reps, pain, notes], i) => ({ day, exercise_id: 'x', set_no: i + 1, weight, reps, pain, notes: notes ?? null }));
@@ -31,4 +32,23 @@ t('specific names win (bottom-half push-up, squeeze press)', () => { assert.matc
 t('own works/benefit override the automatic text', () => { const i = infoFor({ name: 'Bird dogs', works: ['Glutes'], benefit: 'Mine.' }); assert.deepEqual(i.works, ['Glutes']); assert.equal(i.benefit, 'Mine.'); });
 t('unknown custom exercise has no auto info', () => assert.equal(infoFor({ name: 'Zottman thing' }), null));
 t('every library and starter exercise has info', () => { const all = [...library, ...Object.values(starterProgram.sessions).flatMap(s => s.exercises)]; const missing = all.filter(e => !infoFor(e)).map(e => e.name); assert.deepEqual(missing, []); });
+const HW = (o = {}) => ({ gpu: null, adapters: [], ramGb: 32, freeDiskGb: 200, platform: 'win32', appleSilicon: false, ...o });
+t('16 GB NVIDIA card -> gemma4:12b (tested)', () => { const r = recommendModel(HW({ gpu: { name: 'RTX 5080', vramGb: 15.9 } })); assert.equal(r.tag, 'gemma4:12b'); assert.equal(r.tested, true); });
+t('8-12 GB card -> e4b, flagged as untested', () => { const r = recommendModel(HW({ gpu: { name: 'RTX 3070', vramGb: 8 } })); assert.equal(r.tag, 'gemma4:e4b'); assert.equal(r.tested, false); });
+t('4-8 GB card -> e2b', () => assert.equal(recommendModel(HW({ gpu: { name: 'GTX 1650', vramGb: 4 } })).tag, 'gemma4:e2b'));
+t('tiny GPU or no GPU -> no automatic recommendation, steers to CLI/API', () => { assert.equal(recommendModel(HW({ gpu: { name: 'old', vramGb: 2 } })).tag, null); const r = recommendModel(HW()); assert.equal(r.tag, null); assert.match(r.note, /Claude CLI or an API key/); });
+t('unknown AMD/Intel VRAM -> no guess', () => { const r = recommendModel(HW({ adapters: ['AMD Radeon RX 7800'] })); assert.equal(r.tag, null); assert.match(r.note, /could not read/); });
+t('Apple Silicon uses unified memory (untested)', () => { assert.equal(recommendModel(HW({ appleSilicon: true, ramGb: 32 })).tag, 'gemma4:12b'); assert.equal(recommendModel(HW({ appleSilicon: true, ramGb: 16 })).tag, 'gemma4:e4b'); });
+t('low disk space produces a warning', () => assert.match(recommendModel(HW({ gpu: { name: 'x', vramGb: 16 }, freeDiskGb: 6 })).diskWarning, /free/));
+t('catalog is limited to the gemma4 tags we verified', () => assert.deepEqual(CATALOG.map(m => m.tag), ['gemma4:12b', 'gemma4:e4b', 'gemma4:e2b']));
+t('pull progress folds layers into one percentage', () => {
+  const s = { layers: {} };
+  assert.equal(foldPull(s, { status: 'pulling manifest' }).pct, 0);
+  foldPull(s, { digest: 'a', total: 1000, completed: 0 });
+  foldPull(s, { digest: 'b', total: 3000, completed: 0 });
+  const p = foldPull(s, { digest: 'b', total: 3000, completed: 1500 });
+  assert.equal(p.pct, 38); // (0 + 1500) / 4000
+  assert.equal(foldPull(s, { status: 'success' }).done, true);
+  assert.equal(foldPull(s, { error: 'disk full' }).error, 'disk full');
+});
 console.log(process.exitCode ? 'FAILURES' : 'all passed');

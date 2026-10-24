@@ -19,7 +19,7 @@ No accounts. No cloud. No telemetry. Your workouts, measurements and notes live 
 - Weekly workout schedule with a daily checklist and exercise instructions
 - Per-set logging: weight, reps, 0–10 pain score and a note for every set
 - Daily metrics: weight, waist, calories, protein, walking minutes, notes
-- Optional AI trainer: paste a reply, use your local Claude CLI, or bring your own API key (Anthropic, OpenAI-compatible, or local Ollama). Never automatic, always confirmed, never changes your history
+- Optional AI trainer with a guided setup for a free, private local model (Ollama): paste a reply, use your local Claude CLI, or bring your own API key (Anthropic, OpenAI-compatible, or local Ollama). Never automatic, always confirmed, never changes your history
 - Every exercise explains what it works and why it helps
 - Suggested weight for every exercise, based on your history and pain scores (conservative: never progresses on unrecorded or reported pain), with optional trainer picks
 - Exercise illustrations: original start/finish stick figures with the working muscles highlighted (24 common movements; free to use, drawn for this project)
