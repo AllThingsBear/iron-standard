@@ -95,6 +95,7 @@ export async function callAi(system:string,user:string,maxTokens=3000):Promise<{
 export type Pick={exercise_id:string;weight:number|null;reps:string;note:string};
 // The reply is saved as an AI-labelled note. Weight picks are only PROPOSALS; the user must apply them.
 export function splitReply(text:string,validIds:Set<string>):{note:string;picks:Pick[]}{
+  text=text.replace(/<think(ing)?>[\s\S]*?<\/think(ing)?>/gi,''); // some local reasoning models inline their thinking
   const re=/```picks\s*([\s\S]*?)```/i;
   const m=text.match(re);
   const note=text.replace(re,'').trim();

@@ -38,7 +38,7 @@ const mock = http.createServer((req, res) => {
   let b = ''; req.on('data', d => b += d); req.on('end', () => {
     const body = b ? JSON.parse(b) : {}; seen.push({ url: req.url, headers: req.headers, body });
     res.setHeader('Content-Type', 'application/json');
-    if (req.url === '/v1/chat/completions') return res.end(JSON.stringify({ choices: [{ message: { content: body.max_tokens === 20 ? 'OK' : REPLY } }] }));
+    if (req.url === '/v1/chat/completions') return res.end(JSON.stringify({ choices: [{ message: { content: body.max_tokens === 20 ? 'OK' : '<think>hidden reasoning</think>' + String.fromCharCode(10) + REPLY } }] }));
     if (req.url === '/v1/messages') return res.end(JSON.stringify({ content: [{ type: 'text', text: body.max_tokens === 20 ? 'OK' : REPLY }] }));
     res.statusCode = 404; res.end('{}');
   });
@@ -184,7 +184,7 @@ test('AI trainer: key is write-only, reply saved as an AI-labelled note, picks a
   assert.equal(sent.headers.authorization, 'Bearer sk-test-SECRET-123');
   const after = await state();
   const note = after.notes.find(n => /AI trainer/.test(n.author));
-  assert.ok(note && note.author.includes('test-model') && !note.body.includes('```picks'), 'saved as an AI-labelled note without the machine block');
+  assert.ok(note && note.author.includes('test-model') && !note.body.includes('```picks') && !note.body.includes('hidden reasoning'), 'saved as an AI-labelled note without the machine block or inlined reasoning');
   assert.equal(after.sets.length, before.sets.length, 'history untouched');
   assert.deepEqual(after.profile, before.profile, 'goals/profile untouched');
   assert.deepEqual(after.recommendations, before.recommendations, 'picks are NOT applied automatically');
