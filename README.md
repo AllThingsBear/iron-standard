@@ -31,6 +31,10 @@ No accounts. No cloud. No telemetry. Your workouts, measurements and notes live 
 
 ## Quick start
 
+**Windows (no developer tools):** use the installer, see [docs/INSTALL_WINDOWS.md](docs/INSTALL_WINDOWS.md). It installs for your user only and keeps your data outside the program folder. *(Attached to releases that include it.)*
+
+**From source (any OS):**
+
 You need [Node.js](https://nodejs.org) 20 or newer (22 recommended; choose the "LTS" download). Then, in a terminal (PowerShell on Windows, Terminal on macOS/Linux):
 
 ```bash
@@ -68,6 +72,7 @@ Open http://localhost:4871. The container is published on `127.0.0.1` only (chan
 
 ## Documentation
 
+- [Windows installer](docs/INSTALL_WINDOWS.md): install, update, uninstall, where your data lives
 - [User guide](docs/USER_GUIDE.md): daily use, logging, trainer reports
 - [AI trainer setup](docs/AI_SETUP.md): paste, Claude CLI, API key, or a free private local model with Ollama
 - [Troubleshooting](docs/TROUBLESHOOTING.md)
@@ -84,7 +89,7 @@ Open the **DATA** tab in the app to see where everything is stored, download an 
 - [x] Trainer feedback saved back onto each workout
 - [x] Program editor and exercise library (schedule, sessions, exercises)
 - [x] Data export / import and in-app backup
-- [ ] Windows installer (Electron)
+- [x] Windows installer (Electron, per-user, tested install/launch/upgrade/uninstall; unsigned for now)
 - [x] Optional AI integrations (local Claude CLI, bring-your-own API key)
 
 ## Disclaimer

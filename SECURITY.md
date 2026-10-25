@@ -16,6 +16,12 @@ IRON STANDARD is a single-user app meant to run on your own computer.
 - **What the AI receives.** A trainer report: your goals, limitations, workout and set notes, and recent metrics. Choose a provider you trust (a local model such as Ollama keeps everything on your machine).
 - Trainer reports and backups are written to `data/reports/` and `data/backups/`; sharing them is your decision.
 
+## The Windows installer
+
+- It is **not code-signed yet**, so Windows SmartScreen shows an "Unknown publisher" warning. Verify the SHA-256 checksum published with each release (`SHA256SUMS.txt`) before running it.
+- Release installers are built by the public GitHub Actions workflow from the tagged source and tested on a clean Windows runner. There is no auto-updater and no telemetry: you update by installing a newer version.
+- The desktop window only loads the local app (`127.0.0.1`); any other link opens in your normal browser. The Electron window runs with context isolation and the sandbox enabled and no Node.js access.
+
 ## Reporting a vulnerability
 
 Please report security issues privately using GitHub's **Report a vulnerability** (Security tab, then Advisories) on this repository rather than opening a public issue. Include the version and steps to reproduce. We aim to acknowledge reports within a week.

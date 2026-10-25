@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- IRON STANDARD app icon: original artwork (matte black tile, FDE target rings, olive corner marks) -->
+  <rect width="512" height="512" rx="92" fill="#0c0e0c"/>
+  <rect x="14" y="14" width="484" height="484" rx="80" fill="none" stroke="#2d322a" stroke-width="4"/>
+  <g fill="none" stroke="#cdb790" stroke-linecap="round">
+    <circle cx="256" cy="256" r="150" stroke-width="22"/>
+    <circle cx="256" cy="256" r="92" stroke-width="22"/>
+    <circle cx="256" cy="256" r="34" fill="#cdb790" stroke="none"/>
+  </g>
+  <g stroke="#8b9470" stroke-width="22" stroke-linecap="square" fill="none">
+    <path d="M70 130V70h60"/><path d="M442 130V70h-60"/><path d="M70 382v60h60"/><path d="M442 382v60h-60"/>
+  </g>
+  <g stroke="#cdb790" stroke-width="22" stroke-linecap="round">
+    <path d="M256 60v52"/><path d="M256 400v52"/><path d="M60 256h52"/><path d="M400 256h52"/>
+  </g>
+</svg>

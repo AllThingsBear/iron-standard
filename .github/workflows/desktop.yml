@@ -1,0 +1,75 @@
+name: Windows installer
+
+# Builds the installer on a clean Windows runner, installs it silently, launches the installed app and checks it works,
+# then uninstalls. On a version tag (v*) it also attaches the installer + checksum to that GitHub Release.
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - name: Build installer
+        run: npm run desktop:build
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+      - name: Checksum
+        shell: pwsh
+        run: |
+          $f = Get-ChildItem release -Filter 'IRON-STANDARD-Setup-*.exe' | Select-Object -First 1
+          $h = (Get-FileHash $f.FullName -Algorithm SHA256).Hash.ToLower()
+          "$h  $($f.Name)" | Out-File -Encoding ascii "release/SHA256SUMS.txt"
+          Get-Content release/SHA256SUMS.txt
+      - name: Install silently, launch, test, uninstall (clean-machine check)
+        shell: pwsh
+        run: |
+          $setup = (Get-ChildItem release -Filter 'IRON-STANDARD-Setup-*.exe' | Select-Object -First 1).FullName
+          $inst = Join-Path $env:RUNNER_TEMP 'iron-standard-installed'
+          Start-Process -FilePath $setup -ArgumentList '/S', "/D=$inst" -Wait
+          if (-not (Test-Path "$inst\IRON STANDARD.exe")) { throw 'installation failed' }
+          node scripts/desktop-smoke.mjs $inst
+          if ($LASTEXITCODE -ne 0) { throw 'installed app failed its launch test' }
+          Start-Process -FilePath "$inst\Uninstall IRON STANDARD.exe" -ArgumentList '/S' -Wait
+          Start-Sleep -Seconds 5
+          if (Test-Path "$inst\IRON STANDARD.exe") { throw 'uninstall left the app behind' }
+          'install, launch, uninstall: OK'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: |
+            release/IRON-STANDARD-Setup-*.exe
+            release/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-installer
+          path: dist
+      - name: Attach to the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --prerelease --title "IRON STANDARD $TAG" --notes "Windows installer attached. See the changelog for details. Not medical advice."
+          gh release upload "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --clobber

@@ -10,23 +10,76 @@
     "start": "next start -H 127.0.0.1 -p 4871",
     "typecheck": "tsc --noEmit",
     "test": "node scripts/smoke-test.mjs",
-    "test:unit": "node --experimental-strip-types --no-warnings scripts/progression-test.mjs"
+    "test:unit": "node --experimental-strip-types --no-warnings scripts/progression-test.mjs",
+    "desktop:prepare": "node scripts/build-desktop.mjs",
+    "desktop:dir": "node scripts/build-desktop.mjs && electron-builder --dir",
+    "desktop:build": "node scripts/build-desktop.mjs && electron-builder --win nsis --x64",
+    "desktop:smoke": "node scripts/desktop-smoke.mjs release/win-unpacked"
   },
   "dependencies": {
+    "better-sqlite3": "^11.10.0",
+    "lucide-react": "^0.468.0",
     "next": "^15.5.0",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "better-sqlite3": "^11.10.0",
-    "lucide-react": "^0.468.0"
+    "react-dom": "^19.1.0"
   },
   "devDependencies": {
-    "typescript": "^5.7.0",
+    "@types/better-sqlite3": "^7.6.0",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "@types/better-sqlite3": "^7.6.0"
+    "electron": "^45.0.0",
+    "electron-builder": "^26.18.0",
+    "typescript": "^5.7.0"
   },
   "overrides": {
     "postcss": "^8.5.23"
+  },
+  "main": "desktop/main.cjs",
+  "author": {
+    "name": "IRON STANDARD contributors"
+  },
+  "homepage": "https://github.com/AllThingsBear/iron-standard",
+  "build": {
+    "appId": "com.allthingsbear.ironstandard",
+    "productName": "IRON STANDARD",
+    "copyright": "MIT License. Not medical advice.",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "desktop/main.cjs",
+      "build/icon.png",
+      "package.json",
+      "!node_modules/**",
+      "!**/*.map"
+    ],
+    "npmRebuild": false,
+    "nodeGypRebuild": false,
+    "buildDependenciesFromSource": false,
+    "asar": true,
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "IRON STANDARD",
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "IRON-STANDARD-Setup-${version}.${ext}"
+    },
+    "afterPack": "desktop/afterPack.cjs"
   }
 }

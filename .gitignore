@@ -13,3 +13,7 @@ reports/
 .DS_Store
 Thumbs.db
 tsconfig.tsbuildinfo
+# desktop build output
+.next-desktop/
+desktop/server/
+release/
