@@ -4,6 +4,10 @@ All notable changes are documented here. The format follows [Keep a Changelog](h
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-24
+
+Second pre-release: the first with a Windows installer, plus everything built since v0.1.0.
+
 ### Added
 - Program editor (new PROGRAM tab): weekly schedule, sessions, exercises, reordering, duplicate/delete, reset to starter
 - Built-in exercise library (30 generic exercises) filtered by the equipment in your profile
@@ -22,6 +26,11 @@ All notable changes are documented here. The format follows [Keep a Changelog](h
 - DATA tab: full JSON export, sets CSV export, validated import (merge or replace), one-click SQLite backups with download and restore, and a view of where your files are stored. Imports and restores take an automatic safety backup first; the newest 30 backups are kept
 - Original stick-figure illustrations (start/finish poses with the working muscles highlighted) for 24 common exercises, matched by exercise name, so custom exercises pick them up too
 - Trainer reports now include logged exercises that were later removed from the program
+
+### Known limitations
+- The Windows installer is unsigned (SmartScreen shows "Unknown publisher"); verify the checksum in `SHA256SUMS.txt`
+- Windows x64 only; no macOS/Linux installer, no auto-update (by design: no network calls)
+- Local-AI hardware detection is reliable for NVIDIA cards only; AMD, Intel and Apple Silicon are untested
 
 ## [0.1.0] - 2026-10-20
 

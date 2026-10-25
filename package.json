@@ -1,6 +1,6 @@
 {
   "name": "iron-standard",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "license": "MIT",
   "description": "Free, open-source, local-first fitness tracker.",
@@ -12,8 +12,8 @@
     "test": "node scripts/smoke-test.mjs",
     "test:unit": "node --experimental-strip-types --no-warnings scripts/progression-test.mjs",
     "desktop:prepare": "node scripts/build-desktop.mjs",
-    "desktop:dir": "node scripts/build-desktop.mjs && electron-builder --dir --publish never",
-    "desktop:build": "node scripts/build-desktop.mjs && electron-builder --win nsis --x64 --publish never",
+    "desktop:dir": "node scripts/build-desktop.mjs && npx --yes electron-builder@26.18.0 --dir --publish never",
+    "desktop:build": "node scripts/build-desktop.mjs && npx --yes electron-builder@26.18.0 --win nsis --x64 --publish never",
     "desktop:smoke": "node scripts/desktop-smoke.mjs release/win-unpacked"
   },
   "dependencies": {
@@ -28,8 +28,6 @@
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "electron": "^45.0.0",
-    "electron-builder": "^26.18.0",
     "typescript": "^5.7.0"
   },
   "overrides": {
@@ -80,6 +78,7 @@
       "deleteAppDataOnUninstall": false,
       "artifactName": "IRON-STANDARD-Setup-${version}.${ext}"
     },
-    "afterPack": "desktop/afterPack.cjs"
+    "afterPack": "desktop/afterPack.cjs",
+    "electronVersion": "45.0.0"
   }
 }

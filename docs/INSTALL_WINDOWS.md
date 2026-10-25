@@ -2,7 +2,7 @@
 
 The Windows installer is the easiest way to run IRON STANDARD: no Node.js, Docker or terminal needed. It installs for **your user only** (no administrator rights), adds a Start menu shortcut, and opens like a normal desktop program. Everything still runs locally and offline; the app has no accounts and no cloud.
 
-> The installer is attached to GitHub Releases for versions that include it. Until then, use the developer install or Docker described in the [README](../README.md).
+> The installer is attached to GitHub Releases from **v0.2.0**. You can also run IRON STANDARD from source or with Docker; see the [README](../README.md).
 
 ## Install
 

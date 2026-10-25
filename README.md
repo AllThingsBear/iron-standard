@@ -3,7 +3,7 @@
 A free, open-source, **local-first** fitness tracker with a tactical matte-black / FDE / olive look.
 No accounts. No cloud. No telemetry. Your workouts, measurements and notes live in a SQLite database on your own computer.
 
-> **Status: v0.1.0 pre-release.** Core tracking works. A Windows installer, a program editor, data export/import and optional AI-trainer integrations are on the roadmap. Expect rough edges.
+> **Status: v0.2.0 pre-release.** Everything below works and is tested, but expect rough edges. The Windows installer is **not code-signed yet**, so Windows will show an "Unknown publisher" warning (see [the install guide](docs/INSTALL_WINDOWS.md)).
 
 ![Dashboard](docs/screenshots/dashboard.png)
 
@@ -31,7 +31,7 @@ No accounts. No cloud. No telemetry. Your workouts, measurements and notes live 
 
 ## Quick start
 
-**Windows (no developer tools):** use the installer, see [docs/INSTALL_WINDOWS.md](docs/INSTALL_WINDOWS.md). It installs for your user only and keeps your data outside the program folder. *(Attached to releases that include it.)*
+**Windows (no developer tools):** use the installer, see [docs/INSTALL_WINDOWS.md](docs/INSTALL_WINDOWS.md). It installs for your user only and keeps your data outside the program folder. *(Download it from the [latest release](https://github.com/AllThingsBear/iron-standard/releases/latest); it is attached from v0.2.0.)*
 
 **From source (any OS):**
 

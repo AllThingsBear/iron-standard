@@ -35,7 +35,7 @@ npm test           # smoke test: boots the built app on a temporary database
 
 ## Desktop app (Windows installer)
 
-`desktop/main.cjs` is the Electron shell; `scripts/build-desktop.mjs` assembles the server bundle; `desktop/afterPack.cjs` copies it into the package and verifies it. `npm run desktop:build` builds the installer, `npm run desktop:smoke` launch-tests an unpacked or installed copy. Use Node 22 for release builds. See [docs/INSTALL_WINDOWS.md](docs/INSTALL_WINDOWS.md).
+`desktop/main.cjs` is the Electron shell; `scripts/build-desktop.mjs` assembles the server bundle; `desktop/afterPack.cjs` copies it into the package and verifies it. `npm run desktop:build` builds the installer (Electron and electron-builder are fetched on demand at pinned versions, so a normal `npm install` stays light), `npm run desktop:smoke` launch-tests an unpacked or installed copy. Use Node 22 for release builds. See [docs/INSTALL_WINDOWS.md](docs/INSTALL_WINDOWS.md).
 
 ## Exercise illustrations
 

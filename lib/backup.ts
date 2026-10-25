@@ -4,7 +4,7 @@ import Database from 'better-sqlite3';
 import {db,dataDir,dbPath} from './db';
 import {getProfile,getProgram,importSettings,sanitizeProgram} from './settings';
 
-export const APP_VERSION='0.1.0';
+export const APP_VERSION='0.2.0';
 export const BACKUP_DIR=()=>path.join(dataDir,'backups');
 export const BACKUP_NAME=/^iron-standard-[A-Za-z0-9_-]+\.db$/;
 const MAX_ROWS=200000;
