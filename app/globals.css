@@ -564,3 +564,9 @@ footer span{color:var(--tan)}
 .wiz-remove{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:4px 2px}
 .wiz-remove .ghost.sm{padding:7px 10px;border:1px solid var(--edge-2);background:var(--bg);color:var(--text-2);font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;font-weight:700}
 .wiz-remove .danger:hover{color:#e89a8d;border-color:var(--red)}
+
+/* autosave status */
+.autosave{flex:1;align-self:center;font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;color:var(--mute);padding:0 10px}
+.autosave.as-saving,.autosave.as-pending{color:var(--amber)}
+.autosave.as-saved{color:var(--success)}
+.autosave.as-error{color:#e89a8d}

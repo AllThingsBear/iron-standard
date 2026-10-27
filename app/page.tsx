@@ -1,5 +1,5 @@
 'use client';
-import {useEffect,useMemo,useState} from 'react';
+import {useEffect,useMemo,useRef,useState} from 'react';
 import {Activity,CalendarDays,Check,ChevronLeft,ChevronRight,ClipboardList,Crosshair,Dumbbell,Flag,HeartPulse,NotebookPen,Save,Send,Copy,Plus,ShieldAlert,Database,ZoomIn,Zap,Target,TrendingDown,UserCog,X} from 'lucide-react';
 import {Exercise,Program} from '../lib/program';
 import ProgramEditor from './ProgramEditor';
@@ -95,6 +95,10 @@ export default function Page(){
  const [profile,setProfile]=useState<Profile>(defaultProfile);
  const [prog,setProg]=useState<Program|null>(null);
  const [zoom,setZoom]=useState<{src:string;name:string}|null>(null);
+ const pend=useRef<Record<string,{day:string;e:Exercise;rows:SetDraft[]}>>({});
+ const timers=useRef<Record<string,ReturnType<typeof setTimeout>>>({});
+ const entriesRef=useRef<Entry[]>([]);
+ const [saveState,setSaveState]=useState<Record<string,{state:'pending'|'saving'|'saved'|'error';at?:string}>>({});
  const [ai,setAi]=useState<AiState|null>(null);
  const [askingAi,setAskingAi]=useState(false);
  const [proposals,setProposals]=useState<{exercise_id:string;name:string;weight:number|null;reps:string;note:string}[]>([]);
@@ -123,13 +127,15 @@ export default function Page(){
  const week=prog?.week??[]; const program=prog?.sessions??{};
  const dayIndex=(dow(date)+6)%7;
  const session=week[dayIndex]||week[0]||{day:'MON',session:'rest'}; const plan=program[session.session]||{id:'none',title:'NO SESSION',subtitle:'',description:'',exercises:[]};
+ entriesRef.current=entries;
  const logs=useMemo(()=>entries.filter(e=>e.day===date),[entries,date]);
  const session_=sessions.find(x=>x.day===date);
  const confirmed=!!session_?.confirmed_at;
  const dayNotes=notes.filter(n=>n.day===date);
  useEffect(()=>{setSessNote(sessions.find(x=>x.day===date)?.general_note??'')},[date,sessions]);
  const existingDay=days.find(d=>d.day===date);
- useEffect(()=>{const d=days.find(row=>row.day===date);setDaily({calories:String(d?.calories??''),protein:String(d?.protein??''),walk_minutes:String(d?.walk_minutes??''),weight:String(d?.weight??''),waist:String(d?.waist??''),notes:d?.notes??''});setDraft({});setSetsDraft({});setExpanded({});},[date,days]);
+ useEffect(()=>{const d=days.find(row=>row.day===date);setDaily({calories:String(d?.calories??''),protein:String(d?.protein??''),walk_minutes:String(d?.walk_minutes??''),weight:String(d?.weight??''),waist:String(d?.waist??''),notes:d?.notes??''});},[date,days]);
+ useEffect(()=>{setDraft({});setSetsDraft({});setExpanded({});setSaveState({})},[date]);
  useEffect(()=>{setReport(null);setProposals([])},[date]);
  const refreshAi=()=>fetch('/api/ai/config',{cache:'no-store'}).then(r=>r.json()).then(setAi).catch(()=>{});
  useEffect(()=>{refreshAi()},[]);
@@ -154,14 +160,50 @@ export default function Page(){
   return mine;
  }
  const recFor=(e:Exercise):Rec=>recommend(e,sets,recs.find(r=>r.exercise_id===e.id),profile.units,date);
- function applyRec(e:Exercise,rec:Rec){if(rec.weight==null)return;const w=String(rec.weight);const rows=setRows(e).map(r=>r.weight===''?{...r,weight:w}:r);setSetsDraft(o=>({...o,[e.id]:rows}))}
- function editSet(e:Exercise,i:number,field:keyof SetDraft,value:string){const rows=setRows(e).map((r,j)=>j===i?{...r,[field]:value}:r);setSetsDraft(o=>({...o,[e.id]:rows}))}
+ const cleanRows=(rows:SetDraft[])=>rows.filter(r=>r.weight||r.reps||r.notes||(r.pain!==''&&r.pain!=='0'));
+ const JSON_H={'Content-Type':'application/json'};
+ // Autosave: edits are saved ~1 second after you stop typing. It only touches sets; the exercise is marked complete
+ // automatically once every planned set has reps (it is never un-marked).
+ async function runSave(k:string){
+  const p=pend.current[k];if(!p)return;
+  delete pend.current[k];clearTimeout(timers.current[k]);delete timers.current[k];
+  const {day,e}=p;const rows=cleanRows(p.rows);
+  setSaveState(o=>({...o,[e.id]:{state:'saving'}}));
+  try{
+   const r=await fetch('/api/sets',{method:'POST',headers:JSON_H,keepalive:true,body:JSON.stringify({day,exercise_id:e.id,sets:rows})});
+   if(!r.ok)throw new Error();
+   setSets(old=>[...old.filter(x=>!(x.day===day&&x.exercise_id===e.id)),...rows.map((x,i)=>({day,exercise_id:e.id,set_no:i+1,weight:x.weight===''?null:Number(x.weight),reps:x.reps===''?null:Number(x.reps),pain:x.pain===''?null:Number(x.pain),notes:x.notes}))]);
+   const old=entriesRef.current.find(x=>x.day===day&&x.exercise_id===e.id);
+   if(rows.filter(x=>x.reps!=='').length>=e.sets&&!old?.done){
+    const body={day,exercise_id:e.id,done:true,weight:old?.weight??'',reps:old?.reps??'',notes:old?.notes??''};
+    const r2=await fetch('/api/log',{method:'POST',headers:JSON_H,keepalive:true,body:JSON.stringify(body)});
+    if(r2.ok)setEntries(list=>[...list.filter(x=>!(x.day===day&&x.exercise_id===e.id)),{day,exercise_id:e.id,done:1,weight:old?.weight??null,reps:old?.reps??'',notes:old?.notes??''}]);
+   }
+   setSaveState(o=>({...o,[e.id]:{state:'saved',at:new Date().toLocaleTimeString()}}));
+  }catch{setSaveState(o=>({...o,[e.id]:{state:'error'}}))}
+ }
+ function queueSave(e:Exercise,rows:SetDraft[]){
+  const k=date+'|'+e.id;pend.current[k]={day:date,e,rows};
+  clearTimeout(timers.current[k]);timers.current[k]=setTimeout(()=>{runSave(k)},900);
+  setSaveState(o=>({...o,[e.id]:{state:'pending'}}));
+ }
+ function flushSaves(){for(const k of Object.keys(pend.current))runSave(k)}
+ useEffect(()=>{
+  const hide=()=>{if(document.visibilityState==='hidden')flushSaves()};
+  document.addEventListener('visibilitychange',hide);window.addEventListener('pagehide',flushSaves);
+  return()=>{document.removeEventListener('visibilitychange',hide);window.removeEventListener('pagehide',flushSaves)};
+ },[]);
+ useEffect(()=>()=>flushSaves(),[date,tab]); // never lose a pending edit when you change day or tab
+ function applyRec(e:Exercise,rec:Rec){if(rec.weight==null)return;const w=String(rec.weight);const rows=setRows(e).map(r=>r.weight===''?{...r,weight:w}:r);setSetsDraft(o=>({...o,[e.id]:rows}));queueSave(e,rows)}
+ function editSet(e:Exercise,i:number,field:keyof SetDraft,value:string){const rows=setRows(e).map((r,j)=>j===i?{...r,[field]:value}:r);setSetsDraft(o=>({...o,[e.id]:rows}));queueSave(e,rows)}
  function addSet(e:Exercise){const rows=setRows(e);const last=rows[rows.length-1];setSetsDraft(o=>({...o,[e.id]:[...rows,{weight:last?.weight??'',reps:'',pain:'0',notes:''}]}))}
+ // Manual save: same data as autosave, plus it marks the exercise complete right away.
  async function saveSets(e:Exercise){
-  const rows=setRows(e).filter(r=>r.weight||r.reps||r.notes||(r.pain!==''&&r.pain!=='0'));
-  try{setSaving(true);const r=await fetch('/api/sets',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({day:date,exercise_id:e.id,sets:rows})});if(!r.ok)throw new Error();
-   if(rows.length&&!effective(e).done){await fetch('/api/log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({day:date,exercise_id:e.id,...effective(e),done:true})})}
-   await load();setMessage('SETS SAVED')}catch{setMessage('SAVE FAILED — CHECK VALUES (PAIN 0–10)')}finally{setSaving(false)}
+  const k=date+'|'+e.id;delete pend.current[k];clearTimeout(timers.current[k]);delete timers.current[k];
+  const rows=cleanRows(setRows(e));
+  try{setSaving(true);const r=await fetch('/api/sets',{method:'POST',headers:JSON_H,body:JSON.stringify({day:date,exercise_id:e.id,sets:rows})});if(!r.ok)throw new Error();
+   if(rows.length&&!effective(e).done){await fetch('/api/log',{method:'POST',headers:JSON_H,body:JSON.stringify({day:date,exercise_id:e.id,...effective(e),done:true})})}
+   await load();setSaveState(o=>({...o,[e.id]:{state:'saved',at:new Date().toLocaleTimeString()}}));setMessage('SETS SAVED')}catch{setSaveState(o=>({...o,[e.id]:{state:'error'}}));setMessage('SAVE FAILED — CHECK VALUES (PAIN 0–10)')}finally{setSaving(false)}
  }
  async function saveSession(confirm:boolean){
   try{setSaving(true);const r=await fetch('/api/session',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({day:date,general_note:sessNote,confirmed:confirm})});if(!r.ok)throw new Error();await load();setMessage(confirm?'WORKOUT CONFIRMED':'SESSION UPDATED')}catch{setMessage('SAVE FAILED — TRY AGAIN')}finally{setSaving(false)}
@@ -195,7 +237,7 @@ It contains your goals, limitations, workouts, set notes and recent metrics. The
  function effective(e:Exercise):DraftRow{const old=logs.find(x=>x.exercise_id===e.id);return draft[e.id]??{done:!!old?.done,weight:String(old?.weight??''),reps:old?.reps??'',notes:old?.notes??''}}
  function update(e:Exercise,field:keyof DraftRow,value:boolean|string){setDraft(old=>({...old,[e.id]:{...effective(e),...old[e.id],[field]:value}}))}
  async function saveExercise(e:Exercise,override?:boolean){const v=effective(e);const body={day:date,exercise_id:e.id,done:override??v.done,weight:v.weight,reps:v.reps,notes:v.notes};try{setSaving(true);const r=await fetch('/api/log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok)throw new Error('Save failed');await load();setDraft(d=>{const c={...d};delete c[e.id];return c});setMessage('EXERCISE LOG SAVED');}catch{setMessage('SAVE FAILED — TRY AGAIN')}finally{setSaving(false)}}
- async function toggle(e:Exercise,checked:boolean){const v=effective(e);update(e,'done',checked);const body={...v,done:checked};try{const r=await fetch('/api/log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({day:date,exercise_id:e.id,...body})});if(!r.ok)throw Error();await load()}catch{setMessage('SAVE FAILED — RETRY CHECKBOX')}}
+ async function toggle(e:Exercise,checked:boolean){const v=effective(e);update(e,'done',checked);const body={...v,done:checked};try{const r=await fetch('/api/log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({day:date,exercise_id:e.id,...body})});if(!r.ok)throw Error();await load();setDraft(d=>{const c={...d};delete c[e.id];return c})}catch{setMessage('SAVE FAILED — RETRY CHECKBOX')}}
  async function saveProfile(next:Profile,programChoice?:'starter'|'empty'){
   try{const r=await fetch('/api/profile',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({profile:{...next,onboarded:true},programChoice})});if(!r.ok)throw new Error();await load();setMessage('PROFILE SAVED')}catch{setMessage('SAVE FAILED — TRY AGAIN')}
  }
@@ -357,7 +399,8 @@ It contains your goals, limitations, workouts, set notes and recent metrics. The
          </div>)}
          <div className="set-actions">
           <button className="ghost" onClick={()=>addSet(e)}><Plus size={14}/> ADD SET</button>
-          <button className="save" disabled={saving} onClick={()=>saveSets(e)}><Save size={14}/> {setsDraft[e.id]?'SAVE CHANGES':'SAVE SETS'}</button>
+          <span className={'autosave as-'+(saveState[e.id]?.state||'idle')} role="status" aria-live="polite">{({pending:'AUTOSAVE · UNSAVED…',saving:'AUTOSAVE · SAVING…',saved:'AUTOSAVE · SAVED '+(saveState[e.id]?.at||''),error:'NOT SAVED · CHECK THE VALUES (PAIN 0–10, WHOLE REPS)',idle:'AUTOSAVE ON'} as Record<string,string>)[saveState[e.id]?.state||'idle']}</span>
+          <button className="save" disabled={saving} onClick={()=>saveSets(e)}><Save size={14}/> SAVE &amp; MARK DONE</button>
          </div>
         </div>}
         <span className="cleared" aria-hidden="true">CLEARED</span>

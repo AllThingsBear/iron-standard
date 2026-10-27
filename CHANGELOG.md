@@ -4,6 +4,12 @@ All notable changes are documented here. The format follows [Keep a Changelog](h
 
 ## [Unreleased]
 
+### Added
+- Autosave for set logging: type weight, reps, pain and notes right after each set and it saves about a second later (status shown on the card); the exercise is marked complete automatically once every planned set has reps. Edits are also saved if you switch day or tab or close the page. Open cards no longer collapse when other data reloads
+
+### Changed
+- The set editor's button is now "Save & mark done" (it also checks the exercise off immediately)
+
 ## [0.2.0] - 2026-10-24
 
 Second pre-release: the first with a Windows installer, plus everything built since v0.1.0.

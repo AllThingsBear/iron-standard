@@ -17,7 +17,7 @@ The **Daily Mission** tab shows the session scheduled for the selected date. Use
 
 1. Read the exercise description and any caution note. Click the small illustration to enlarge it. Each exercise also shows **what it works** (muscle chips) and **why it helps**, in plain English.
 2. Tick the checkbox when an exercise is done, **or** click **LOG SET** and record each set.
-3. Each exercise shows a **suggested weight** (see Suggested weights below). For each set enter weight, reps, a **pain score (0–10, defaults to 0)** and optional **notes** (how it felt, form, pain location, tingling, anything you want to remember). Saving sets also marks the exercise complete.
+3. Each exercise shows a **suggested weight** (see Suggested weights below). Log each set **right after you finish it**, so pain and notes are recorded where they actually happened: enter weight, reps, a **pain score (0–10, defaults to 0)** and optional **notes** (how it felt, form, pain location and when it started, tingling, anything you want to remember). Your entries are **autosaved** about a second after you stop typing (the card shows "Autosave · saved"), and the exercise is marked complete automatically once every planned set has reps. **Save & mark done** checks it off immediately.
 4. Add daily metrics (weight, waist, calories, protein, walking) in **Daily Intel**.
 5. When you finish, write a general note in the **After-Action Report** and click **Confirm workout**.
 
