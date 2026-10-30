@@ -1,4 +1,5 @@
-export type Exercise = { id: string; name: string; sets: number; reps: string; description: string; caution?: string; category: string; equipment?: string[]; works?: string[]; benefit?: string };
+import type { Track } from './tracking';
+export type Exercise = { id: string; name: string; sets: number; reps: string; description: string; caution?: string; category: string; equipment?: string[]; works?: string[]; benefit?: string; track?: Track; optional?: boolean };
 export type Session = { id: string; title: string; subtitle: string; description: string; exercises: Exercise[] };
 export type Program = { sessions: Record<string, Session>; week: { day: string; session: string }[] };
 

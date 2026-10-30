@@ -9,7 +9,7 @@
     "build": "next build",
     "start": "next start -H 127.0.0.1 -p 4871",
     "typecheck": "tsc --noEmit",
-    "test": "node scripts/smoke-test.mjs",
+    "test": "node scripts/smoke-test.mjs && node scripts/fields-test.mjs",
     "test:unit": "node --experimental-strip-types --no-warnings scripts/progression-test.mjs",
     "desktop:prepare": "node scripts/build-desktop.mjs",
     "desktop:dir": "node scripts/build-desktop.mjs && npx --yes electron-builder@26.18.0 --dir --publish never",

@@ -34,6 +34,7 @@ You are acting as my strength & conditioning coach / personal trainer. Evaluate 
 
 ## HOW TO READ THE DATA
 - Weights are in ${w}. Pain is my per-set 0-10 score (blank = not recorded; 0 = none). Each set's notes are general free text: how the set went, form, effort, pain, tingling, anything else.
-- Rest time is not tracked.
+- Each exercise is logged in its own units: weight + reps for loaded lifts, reps only for bodyweight moves, seconds for holds and carries, minutes for walks. Do not treat a missing weight on a bodyweight move as missing data.
+- Exercises tagged OPTIONAL BONUS are extra work I chose to add; skipping one is not a missed workout, but when I do it, count it toward weekly load and recovery.
 `;
 }

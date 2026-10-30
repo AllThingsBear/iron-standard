@@ -6,6 +6,8 @@ All notable changes are documented here. The format follows [Keep a Changelog](h
 
 ### Added
 - Autosave for set logging: type weight, reps, pain and notes right after each set and it saves about a second later (status shown on the card); the exercise is marked complete automatically once every planned set has reps. Edits are also saved if you switch day or tab or close the page. Open cards no longer collapse when other data reloads
+- Per-exercise log fields: walks log minutes only, bodyweight moves (push-ups, bridges, dead bugs, bird dogs) log reps only, planks log seconds, carries log weight and seconds, lifts log weight and reps. Automatic from the exercise, overridable with LOG FIELDS in the program editor; trainer reports use the matching units. No database change
+- Optional bonus exercises (flag in the program editor): shown with a marker, excluded from completion counts, and labelled in trainer reports
 
 ### Changed
 - The set editor's button is now "Save & mark done" (it also checks the exercise off immediately)

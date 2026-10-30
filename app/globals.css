@@ -570,3 +570,10 @@ footer span{color:var(--tan)}
 .autosave.as-saving,.autosave.as-pending{color:var(--amber)}
 .autosave.as-saved{color:var(--success)}
 .autosave.as-error{color:#e89a8d}
+
+/* fields per exercise type + optional bonus exercises */
+.set-head.no-w,.set-row.no-w{grid-template-columns:34px 96px 74px 1fr}
+.exercise.is-optional{border-left:3px dashed var(--edge-hi)}
+.opt-chip{border-color:var(--amber)!important;color:var(--amber)!important;letter-spacing:.1em}
+.exercise.is-optional.is-done .opt-chip{opacity:.7}
+@media (max-width:640px){.set-row.no-w{grid-template-columns:28px 1fr 64px}.set-row.no-w .set-note{grid-column:1/-1}}

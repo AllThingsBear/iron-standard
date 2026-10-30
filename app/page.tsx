@@ -8,6 +8,7 @@ import AiSettings,{AiState} from './AiSettings';
 import {figureFor} from '../lib/figures';
 import {infoFor} from '../lib/exerciseInfo';
 import {recommend,TrainerRec,Rec} from '../lib/progression';
+import {trackOf,hasWeight,valueKind,VALUE_HEAD,VALUE_HINT} from '../lib/tracking';
 import {Profile,defaultProfile,EQUIPMENT,wUnit,sUnit} from '../lib/units';
 
 type Entry={day:string;exercise_id:string;done:number;weight:number|null;reps:string;notes:string};
@@ -140,8 +141,9 @@ export default function Page(){
  const refreshAi=()=>fetch('/api/ai/config',{cache:'no-store'}).then(r=>r.json()).then(setAi).catch(()=>{});
  useEffect(()=>{refreshAi()},[]);
 
- const completed=plan?.exercises.filter(e=>{const val=draft[e.id]?.done;return val??Boolean(logs.find(x=>x.exercise_id===e.id)?.done)}).length??0;
- const total=plan?.exercises.length??0;
+ const required=(plan?.exercises??[]).filter(e=>!e.optional);
+ const completed=required.filter(e=>{const val=draft[e.id]?.done;return val??Boolean(logs.find(x=>x.exercise_id===e.id)?.done)}).length;
+ const total=required.length;
  const missionDone=total>0&&completed===total;
  const changeDate=(offset:number)=>{const [y,m,d]=date.split('-').map(Number);const dt=new Date(y,m-1,d);dt.setDate(dt.getDate()+offset);setDate(dateKey(dt));};
  const latestWeight=days.filter(d=>d.weight!==null).sort((a,b)=>b.day.localeCompare(a.day))[0]?.weight;
@@ -350,20 +352,20 @@ It contains your goals, limitations, workouts, set notes and recent metrics. The
      <section className="main-column">
       <div className={'panel training '+(missionDone?'is-complete':'')}>
        <Corners/>
-       <div className="panel-top"><span className="section-mark">TODAY&apos;S TRAINING</span><span className="counter">{completed}/{total} COMPLETE</span></div>
+       <div className="panel-top"><span className="section-mark">TODAY&apos;S TRAINING</span><span className="counter">{total>0?`${completed}/${total} COMPLETE`:'OPTIONAL WORK ONLY'}</span></div>
        <div className="training-head">
         <div>
          <h2>{plan.title}</h2>
          <p className="subheading">{plan.subtitle}</p>
          <p className="plan-intro">{plan.description}</p>
         </div>
-        <Ring value={completed} max={total}/>
+        {total>0&&<Ring value={completed} max={total}/>}
        </div>
-       <div className="progress-track" aria-hidden="true"><div style={{width:`${total?completed/total*100:100}%`}}/></div>
+       {total>0&&<div className="progress-track" aria-hidden="true"><div style={{width:`${completed/total*100}%`}}/></div>}
        {missionDone&&<div className="complete-banner"><span className="stamp">MISSION COMPLETE</span><span>ALL {total} EXERCISES CLEARED. LOG YOUR INTEL AND RECOVER.</span></div>}
 
        {plan.exercises.length===0?<div className="rest-card"><HeartPulse size={30}/><strong>RECOVERY IS PART OF THE MISSION</strong><p>Rest, eat well, and resume the next scheduled training day.</p></div>
-       :<ol className="exercises">{plan.exercises.map((e,i)=>{const v=effective(e);const open=!!expanded[e.id];const dirty=!!draft[e.id];return <li className={'exercise '+(v.done?'is-done ':'')+(open?'is-open':'')} key={e.id}>
+       :<ol className="exercises">{plan.exercises.map((e,i)=>{const v=effective(e);const open=!!expanded[e.id];const dirty=!!draft[e.id];return <li className={'exercise '+(v.done?'is-done ':'')+(e.optional?'is-optional ':'')+(open?'is-open':'')} key={e.id}>
         <div className="exercise-header">
          <label className="check-wrap">
           <input type="checkbox" checked={v.done} aria-label={`Mark ${e.name} complete`} onChange={ev=>toggle(e,ev.target.checked)}/>
@@ -372,7 +374,7 @@ It contains your goals, limitations, workouts, set notes and recent metrics. The
          <div className="exercise-number">{String(i+1).padStart(2,'0')}</div>
          <div className="exercise-title">
           <strong>{e.name}</strong>
-          <small><span className="chip">{e.category}</span><span className="meta">{e.sets} SETS × {e.reps}</span>{(()=>{const r=recFor(e);return r.weight!=null?<span className={'chip rec-chip rec-'+r.kind} title={r.reason}>{r.source==='trainer'?'PICK':'REC'} {r.weight} {wu}</span>:null})()}</small>
+          <small>{e.optional&&<span className="chip opt-chip">OPTIONAL BONUS</span>}<span className="chip">{e.category}</span><span className="meta">{e.sets} SETS × {e.reps}</span>{(()=>{const r=recFor(e);return r.weight!=null?<span className={'chip rec-chip rec-'+r.kind} title={r.reason}>{r.source==='trainer'?'PICK':'REC'} {r.weight} {wu}</span>:null})()}</small>
          </div>
          <button className={'expand '+(open?'is-open':'')} onClick={()=>setExpanded(x=>({...x,[e.id]:!x[e.id]}))} aria-expanded={open} aria-controls={`details-${e.id}`}><NotebookPen size={15}/><span>{open?'CLOSE':'LOG SET'}</span></button>
         </div>
@@ -384,22 +386,22 @@ It contains your goals, limitations, workouts, set notes and recent metrics. The
         </div>:null})()}
         {e.caution&&<p className="caution"><ShieldAlert size={15}/><span><b>CAUTION</b> {e.caution}</span></p>}
         {open&&<div className="exercise-details sets-editor" id={`details-${e.id}`}>
-         {(()=>{const rec=recFor(e);return <div className={'rec-box rec-'+rec.kind}>
+         {(()=>{const tk0=trackOf(e);if(tk0==='minutes'||tk0==='time')return null;const rec=recFor(e);return <div className={'rec-box rec-'+rec.kind}>
          <div className="rec-top"><b>{rec.source==='trainer'?'TRAINER PICK':'SUGGESTED'}</b><span className="rec-w">{rec.weight!=null?`${rec.weight} ${wu}`:rec.kind==='bodyweight'?'BODYWEIGHT':'YOUR CALL'}</span><span className="rec-r">{rec.targetReps}</span>{rec.weight!=null&&<button type="button" className="ghost sm" onClick={()=>applyRec(e,rec)}>FILL {rec.weight} {wu}</button>}</div>
          <p>{rec.reason}</p>
          {rec.last&&<small>LAST ({fmt(rec.last.day)}): {rec.last.summary}</small>}
         </div>})()}
-        <div className="set-head" aria-hidden="true"><span>SET</span><span>WEIGHT ({wu})</span><span>REPS</span><span>PAIN 0–10</span><span>NOTES</span></div>
-         {setRows(e).map((r,i)=><div className="set-row" key={i}>
+        {(()=>{const tk=trackOf(e);const showW=hasWeight(tk)||setRows(e).some(r=>r.weight!=='');const vk=valueKind(tk);return <div className={'set-head'+(showW?'':' no-w')} aria-hidden="true"><span>SET</span>{showW&&<span>{hasWeight(tk)?`WEIGHT (${wu})`:`WEIGHT (${wu}) · OLD`}</span>}<span>{VALUE_HEAD[vk]}</span><span>PAIN 0–10</span><span>NOTES</span></div>})()}
+         {(()=>{const tk=trackOf(e);const showW=hasWeight(tk)||setRows(e).some(r=>r.weight!=='');const vk=valueKind(tk);return setRows(e).map((r,i)=><div className={'set-row'+(showW?'':' no-w')} key={i}>
           <span className="set-no">{i+1}</span>
-          <input type="number" inputMode="decimal" min="0" max="500" step="0.5" aria-label={`${e.name} set ${i+1} weight`} placeholder={wu.toLowerCase()} value={r.weight} onChange={x=>editSet(e,i,'weight',x.target.value)}/>
-          <input type="number" inputMode="numeric" min="0" max="500" aria-label={`${e.name} set ${i+1} reps`} placeholder="reps" value={r.reps} onChange={x=>editSet(e,i,'reps',x.target.value)}/>
+          {showW&&<input type="number" inputMode="decimal" min="0" max="500" step="0.5" aria-label={`${e.name} set ${i+1} weight`} placeholder={wu.toLowerCase()} value={r.weight} onChange={x=>editSet(e,i,'weight',x.target.value)}/>}
+          <input type="number" inputMode="numeric" min="0" max="500" aria-label={`${e.name} set ${i+1} ${VALUE_HEAD[vk].toLowerCase()}`} placeholder={VALUE_HINT[vk]} value={r.reps} onChange={x=>editSet(e,i,'reps',x.target.value)}/>
           <select aria-label={`${e.name} set ${i+1} pain`} className={'pain p'+(r.pain===''?'x':Number(r.pain)>=4?'hi':Number(r.pain)>=1?'mid':'0')} value={r.pain} onChange={x=>editSet(e,i,'pain',x.target.value)}><option value="">—</option>{Array.from({length:11},(_,n)=><option key={n} value={n}>{n}</option>)}</select>
           <input className="set-note" aria-label={`${e.name} set ${i+1} notes`} placeholder="Notes: how it felt, form, pain, tingling…" maxLength={500} value={r.notes} onChange={x=>editSet(e,i,'notes',x.target.value)}/>
-         </div>)}
+         </div>)})()}
          <div className="set-actions">
           <button className="ghost" onClick={()=>addSet(e)}><Plus size={14}/> ADD SET</button>
-          <span className={'autosave as-'+(saveState[e.id]?.state||'idle')} role="status" aria-live="polite">{({pending:'AUTOSAVE · UNSAVED…',saving:'AUTOSAVE · SAVING…',saved:'AUTOSAVE · SAVED '+(saveState[e.id]?.at||''),error:'NOT SAVED · CHECK THE VALUES (PAIN 0–10, WHOLE REPS)',idle:'AUTOSAVE ON'} as Record<string,string>)[saveState[e.id]?.state||'idle']}</span>
+          <span className={'autosave as-'+(saveState[e.id]?.state||'idle')} role="status" aria-live="polite">{({pending:'AUTOSAVE · UNSAVED…',saving:'AUTOSAVE · SAVING…',saved:'AUTOSAVE · SAVED '+(saveState[e.id]?.at||''),error:'NOT SAVED · CHECK THE VALUES (PAIN 0–10, WHOLE NUMBERS)',idle:'AUTOSAVE ON'} as Record<string,string>)[saveState[e.id]?.state||'idle']}</span>
           <button className="save" disabled={saving} onClick={()=>saveSets(e)}><Save size={14}/> SAVE &amp; MARK DONE</button>
          </div>
         </div>}

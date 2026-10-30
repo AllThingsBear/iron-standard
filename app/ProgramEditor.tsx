@@ -4,6 +4,7 @@ import {ChevronDown,ChevronUp,Copy,Plus,RotateCcw,Save,Trash2} from 'lucide-reac
 import type {Exercise,Program} from '../lib/program';
 import {library,isAvailable} from '../lib/library';
 import {EQUIPMENT} from '../lib/units';
+import {TRACKS,TRACK_LABEL,trackOf} from '../lib/tracking';
 
 const rid=()=>Math.random().toString(36).slice(2,8);
 const clone=<T,>(x:T):T=>JSON.parse(JSON.stringify(x));
@@ -70,7 +71,7 @@ export default function ProgramEditor({program,equipment,onSave,onReset}:{progra
     {s.exercises.map((e,i)=>{const eo=openEx===e.id;return <article className="ed-ex" key={e.id}>
      <header>
       <button type="button" className="ed-toggle" aria-expanded={eo} onClick={()=>setOpenEx(eo?null:e.id)}>
-       <span className="ed-title">{e.name||'Unnamed'}</span><small>{e.sets} × {e.reps||'—'} · {e.category}</small>{eo?<ChevronUp size={14}/>:<ChevronDown size={14}/>}
+       <span className="ed-title">{e.name||'Unnamed'}</span><small>{e.sets} × {e.reps||'—'} · {e.category}{e.optional?' · OPTIONAL':''}</small>{eo?<ChevronUp size={14}/>:<ChevronDown size={14}/>}
       </button>
       <div className="ed-tools">
        <button type="button" className="icon sm" disabled={i===0} onClick={()=>move(id,i,-1)} aria-label="Move up"><ChevronUp size={14}/></button>
@@ -83,6 +84,8 @@ export default function ProgramEditor({program,equipment,onSave,onReset}:{progra
       <label>SETS<input type="number" min={1} max={20} value={e.sets} onChange={x=>setEx(id,i,'sets',Number(x.target.value))}/></label>
       <label>REPS / TIME<input value={e.reps} maxLength={40} placeholder="8–12, 30 sec, 20 min" onChange={x=>setEx(id,i,'reps',x.target.value)}/></label>
       <label>CATEGORY<select value={CATS.includes(e.category)?e.category:'OTHER'} onChange={x=>setEx(id,i,'category',x.target.value)}>{CATS.map(c=><option key={c}>{c}</option>)}</select></label>
+      <label>LOG FIELDS<select value={e.track??''} onChange={x=>setEx(id,i,'track',x.target.value||undefined)}><option value="">Automatic: {TRACK_LABEL[trackOf(e)]}</option>{TRACKS.map(t=><option key={t} value={t}>{TRACK_LABEL[t]}</option>)}</select></label>
+      <label className="full eq-filter"><input type="checkbox" checked={!!e.optional} onChange={x=>setEx(id,i,'optional',x.target.checked||undefined)}/> OPTIONAL BONUS: extra work you may skip; it does not count toward completing the session</label>
       <label className="full">WHAT IT WORKS <i className="opt">OPTIONAL · COMMA-SEPARATED · BLANK = AUTO</i><input value={(e.works??[]).join(', ')} maxLength={200} placeholder="Chest, Triceps, Core" onChange={x=>setEx(id,i,'works',x.target.value.split(',').map(s=>s.trimStart()))}/></label>
       <label className="full">WHY IT HELPS <i className="opt">OPTIONAL · BLANK = AUTO</i><textarea rows={2} maxLength={300} value={e.benefit??''} onChange={x=>setEx(id,i,'benefit',x.target.value)}/></label>
       <label className="full">FORM INSTRUCTIONS<textarea rows={3} maxLength={800} value={e.description} onChange={x=>setEx(id,i,'description',x.target.value)}/></label>

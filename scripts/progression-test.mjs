@@ -4,6 +4,7 @@ import { infoFor } from '../lib/exerciseInfo.ts';
 import { library } from '../lib/library.ts';
 import { starterProgram } from '../lib/program.ts';
 import { recommendModel, foldPull, CATALOG } from '../lib/localAi.ts';
+import { trackOf, formatSet, hasWeight, valueKind } from '../lib/tracking.ts';
 import assert from 'node:assert/strict';
 const ex = (reps = '8–12', sets = 3) => ({ id: 'x', name: 'X', sets, reps, category: 'STRENGTH', description: '' });
 const S = (day, rows) => rows.map(([weight, reps, pain, notes], i) => ({ day, exercise_id: 'x', set_no: i + 1, weight, reps, pain, notes: notes ?? null }));
@@ -50,5 +51,46 @@ t('pull progress folds layers into one percentage', () => {
   assert.equal(p.pct, 38); // (0 + 1500) / 4000
   assert.equal(foldPull(s, { status: 'success' }).done, true);
   assert.equal(foldPull(s, { error: 'disk full' }).error, 'disk full');
+});
+
+// ---- which fields each exercise logs ----
+const X = (name, reps, equipment) => ({ name, reps, equipment });
+const DB = ['dumbbells'], BW = ['bodyweight'];
+const cases = [
+  [X('PowerBlock floor press', '8–12', DB), 'weight_reps'], [X('Dumbbell squeeze floor press', '10–12', DB), 'weight_reps'],
+  [X('Lateral raises', '12–15', DB), 'weight_reps'], [X('Dumbbell squats', '10–12', DB), 'weight_reps'],
+  [X('Supported one-arm row', '10 / side', DB), 'weight_reps'], [X('Hammer curls', '10–12', DB), 'weight_reps'],
+  [X('Standard push-ups', '8–15', BW), 'reps'], [X('Feet-elevated push-ups', '8–12', BW), 'reps'], [X('Bottom-half push-ups', '8–12', BW), 'reps'],
+  [X('Glute bridges', '12–15', BW), 'reps'], [X('Dead bugs', '8 / side', BW), 'reps'], [X('Bird dogs', '8 / side', BW), 'reps'],
+  [X('Front plank', '20–40 sec', BW), 'time'],
+  [X('Farmer’s carries', '20–30 sec', DB), 'weight_time'],
+  [X('Comfortable walk', '20–35 min', BW), 'minutes'], [X('Gentle mobility flow', '10 min', BW), 'minutes'],
+  [X('Push-ups', '10'), 'reps'], [X('Goblet squat', '10'), 'weight_reps'], [X('Easy jog', '20 min'), 'minutes'], [X('Weighted push-ups', '8'), 'weight_reps'],
+  [{ ...X('Glute bridges', '12', BW), track: 'weight_reps' }, 'weight_reps'],
+  [{ ...X('Standard push-ups', '10', BW), track: 'bogus' }, 'reps']
+];
+for (const [ex, want] of cases) t(`logs "${ex.name}" as ${want}`, () => assert.equal(trackOf(ex), want));
+t('every library and starter exercise gets a sensible track', () => {
+  const all = [...library, ...Object.values(starterProgram.sessions).flatMap(s => s.exercises)];
+  for (const e of all) {
+    const tk = trackOf(e);
+    if (/walk|mobility/i.test(e.name)) assert.equal(tk, 'minutes', e.name);
+    if (/plank/i.test(e.name) && /sec/.test(e.reps)) assert.equal(tk, 'time', e.name);
+    if (/carry/i.test(e.name)) assert.equal(tk, 'weight_time', e.name);
+    if (/push-?up|bridge|dead bug|bird dog/i.test(e.name) && !/dumbbell|weighted/i.test(e.name)) assert.equal(tk, 'reps', e.name);
+    if (/curl|press|row|squat|raise|swing|extension/i.test(e.name) && (e.equipment || []).some(q => q !== 'bodyweight')) assert.equal(tk, 'weight_reps', e.name);
+  }
+});
+t('weight only applies to weighted tracks, value units are right', () => {
+  assert.equal(hasWeight('reps'), false); assert.equal(hasWeight('minutes'), false); assert.equal(hasWeight('weight_time'), true);
+  assert.equal(valueKind('minutes'), 'min'); assert.equal(valueKind('time'), 'sec'); assert.equal(valueKind('weight_time'), 'sec'); assert.equal(valueKind('reps'), 'reps');
+});
+t('trainer report formats each kind of set in its own units', () => {
+  assert.equal(formatSet('minutes', { weight: null, reps: 35 }, 'lb'), '35 min');
+  assert.equal(formatSet('reps', { weight: null, reps: 12 }, 'lb'), '12 reps');
+  assert.equal(formatSet('time', { weight: null, reps: 40 }, 'lb'), '40 s hold');
+  assert.equal(formatSet('weight_time', { weight: 30, reps: 45 }, 'lb'), '30 lb for 45 s');
+  assert.equal(formatSet('weight_reps', { weight: 35, reps: 10 }, 'lb'), '35 lb x 10 reps');
+  assert.match(formatSet('reps', { weight: 12, reps: null }, 'lb'), /weight field: 12 lb/, 'a stray weight on a bodyweight move is flagged, not hidden');
 });
 console.log(process.exitCode ? 'FAILURES' : 'all passed');

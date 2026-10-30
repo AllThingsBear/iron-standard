@@ -1,6 +1,7 @@
 import {db} from './db';
 import {Profile,defaultProfile} from './units';
 import {Program,Session,starterProgram,emptyProgram} from './program';
+import {TRACKS} from './tracking';
 
 function ensure(){db().exec('CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)')}
 function read<T>(key:string):T|null{ensure();const r=db().prepare('SELECT value FROM settings WHERE key=?').get(key) as {value:string}|undefined;if(!r)return null;try{return JSON.parse(r.value) as T}catch{return null}}
@@ -50,7 +51,7 @@ export function sanitizeProgram(input:any):Program{
       seen.add(eid);
       const sets=Math.round(Number(e?.sets));
       const caution=txt(e?.caution,500).trim();
-      return {id:eid,name:txt(e?.name,80).trim()||'Unnamed exercise',sets:Number.isFinite(sets)?Math.min(20,Math.max(1,sets)):1,reps:txt(e?.reps,40),category:txt(e?.category,24).toUpperCase()||'STRENGTH',description:txt(e?.description,800),...(caution?{caution}:{}),...(Array.isArray(e?.works)&&e.works.length?{works:e.works.map((q:any)=>txt(q,30).trim()).filter(Boolean).slice(0,8)}:{}),...(txt(e?.benefit,300).trim()?{benefit:txt(e?.benefit,300).trim()}:{}),equipment:Array.isArray(e?.equipment)?e.equipment.map((q:any)=>txt(q,40)).filter(Boolean).slice(0,10):[]};
+      return {id:eid,name:txt(e?.name,80).trim()||'Unnamed exercise',sets:Number.isFinite(sets)?Math.min(20,Math.max(1,sets)):1,reps:txt(e?.reps,40),category:txt(e?.category,24).toUpperCase()||'STRENGTH',description:txt(e?.description,800),...(caution?{caution}:{}),...(e?.optional===true?{optional:true}:{}),...((TRACKS as string[]).includes(e?.track)?{track:e.track}:{}),...(Array.isArray(e?.works)&&e.works.length?{works:e.works.map((q:any)=>txt(q,30).trim()).filter(Boolean).slice(0,8)}:{}),...(txt(e?.benefit,300).trim()?{benefit:txt(e?.benefit,300).trim()}:{}),equipment:Array.isArray(e?.equipment)?e.equipment.map((q:any)=>txt(q,40)).filter(Boolean).slice(0,10):[]};
     })};
   }
   const ids=Object.keys(sessions);
