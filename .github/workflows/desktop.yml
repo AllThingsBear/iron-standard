@@ -45,7 +45,7 @@ jobs:
           Start-Sleep -Seconds 5
           if (Test-Path "$inst\IRON STANDARD.exe") { throw 'uninstall left the app behind' }
           'install, launch, uninstall: OK'
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: windows-installer
           path: |
